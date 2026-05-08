@@ -1,4 +1,4 @@
-# Afridata IoT Cloud Platform
+# JHUB Africa IoT Cloud Platform
 
 > A multi-tenant IoT data ingestion, storage, and visualization platform built for Africa — starting with Kenya, designed to scale continent-wide.
 
