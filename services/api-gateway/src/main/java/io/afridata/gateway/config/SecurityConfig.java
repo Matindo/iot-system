@@ -1,5 +1,6 @@
 package io.afridata.gateway.config;
 
+import io.afridata.gateway.filter.ApiKeyAuthFilter;
 import io.afridata.gateway.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final ApiKeyAuthFilter apiKeyFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -26,13 +28,14 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/v1/auth/**",
-                    "/actuator/**"
-                ).permitAll()
+                .requestMatchers("/api/v1/auth/**", "/actuator/**").permitAll()
+                // Ingest accepts both JWT (developer testing) and API key (devices)
+                .requestMatchers("/api/v1/ingest/**").hasAnyRole("USER", "ADMIN", "DEVICE")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated()
+                .anyRequest().hasAnyRole("USER", "ADMIN")
             )
+            // API key filter runs first; if it authenticates the request, JWT filter is a no-op
+            .addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

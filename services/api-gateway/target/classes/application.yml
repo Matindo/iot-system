@@ -1,0 +1,52 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:afridata}
+    username: ${DB_USER:afridata_app}
+    password: ${DB_PASSWORD:changeme}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: platform
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:changeme}
+      timeout: 1s
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: 1
+      retries: 3
+
+jwt:
+  secret: ${JWT_SECRET:changeme-min-32-chars-for-dev-only}
+  expiry-minutes: ${JWT_EXPIRY_MINUTES:60}
+  refresh-expiry-days: ${JWT_REFRESH_EXPIRY_DAYS:30}
+
+services:
+  auth-service-url: ${AUTH_SERVICE_URL:http://auth-service:8081}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+logging:
+  level:
+    io.afridata: INFO
+    org.springframework.security: WARN
