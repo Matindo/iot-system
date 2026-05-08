@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: io.ioteca.gateway.service.RateLimitServiceTest
 -------------------------------------------------------------------------------
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.092 s -- in io.ioteca.gateway.service.RateLimitServiceTest
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.042 s -- in io.ioteca.gateway.service.RateLimitServiceTest

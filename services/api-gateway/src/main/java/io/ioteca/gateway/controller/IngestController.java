@@ -73,14 +73,14 @@ public class IngestController {
         ));
     }
 
-    // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── helpers ──────────────────────────────────────────────────────────────
 
     private UUID resolveProjectId(HttpServletRequest request, UUID queryParam) {
-        // API key path â€” project_id set by ApiKeyAuthFilter
+        // API key path — project_id set by ApiKeyAuthFilter
         UUID fromKey = (UUID) request.getAttribute(ApiKeyAuthFilter.PROJECT_ID_ATTR);
         if (fromKey != null) return fromKey;
 
-        // JWT path â€” caller must supply projectId as a query parameter
+        // JWT path — caller must supply projectId as a query parameter
         if (queryParam != null) return queryParam;
 
         throw new IllegalArgumentException(

@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: io.ioteca.alert.service.AlertEvaluatorTest
 -------------------------------------------------------------------------------
-Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.603 s -- in io.ioteca.alert.service.AlertEvaluatorTest
+Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 5.662 s -- in io.ioteca.alert.service.AlertEvaluatorTest

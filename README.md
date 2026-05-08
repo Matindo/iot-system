@@ -120,13 +120,13 @@ All services are containerized. Each box above is a separate Docker container, o
 | Charting | Apache ECharts | Handles large time-series datasets efficiently in browser |
 | Device Map | Leaflet.js | Open-source, lightweight, no API key required |
 | Containerization | Docker + Docker Compose | Dev parity, service isolation, production orchestration |
-| Reverse Proxy | Nginx | TLS termination, rate limiting at edge, static frontend serving |
+| Reverse Proxy | Nginx Proxy Manager (external) | TLS termination, routes to frontend (:3000) and api-gateway (:8080) |
 
 ---
 
 ## 4. Service Breakdown
 
-The platform is composed of the following independent microservices. Each runs in its own container and communicates over the internal Docker network (`IoTeca-internal`).
+The platform is composed of the following independent microservices. Each runs in its own container and communicates over the internal Docker network (`ioteca`).
 
 ---
 
@@ -382,7 +382,7 @@ Single-page application built with **Vite + Vue 3 (Options API)** and served by 
 
 **Router guards:** `requiresAuth` (redirect to /login), `requiresAdmin` (redirect to /dashboard), `guest` (redirect to /dashboard if already logged in)
 
-**Dev proxy** (`vite.config.js`): `/api/v1/auth` and `/api/v1/keys` ΓåÆ `:8081`; all other `/api` ΓåÆ `:8080`
+**Dev proxy** (`vite.config.js`): all `/api` → `:8080` (api-gateway handles auth and keys routing internally)
 
 ---
 
@@ -894,14 +894,30 @@ The platform supports all four major IoT connection protocols. The choice is ent
 **Why:** Persistent TCP connection, 2-byte protocol overhead per message, designed for low-bandwidth unreliable networks. A sensor sending every second does not pay TCP handshake cost per message.
 
 ```
-Broker host:  mqtt.ioteca.io
-Port:         1883 (plain) | 8883 (TLS — required for production)
-Username:     {project_id}
-Password:     {api_key}
-Client ID:    {device_id}  (must be unique per device per project)
+Broker host:  your-host (EMQX)
+Port:         1883 (plain) | 8883 (TLS) | 8083 (WebSocket, path /mqtt)
+Username:     {project_id}        ← the full UUID of your project
+Password:     {api_key}           ← the full API key (ioteca_live_...)
+Client ID:    {device_id}         ← any unique string per device
 Topic:        ioteca/{project_id}/{device_id}/{metric_group}
-QoS:          1 (at-least-once delivery — recommended)
+QoS:          1 (at-least-once — recommended)
 ```
+
+**Payload** (same JSON schema as HTTP ingest — `project_id` can be omitted, it is resolved from the Kafka message key set by the EMQX bridge):
+
+```json
+{
+  "device_id": "sensor_01",
+  "timestamp": 1712345678000,
+  "metrics": {
+    "temperature": 24.5,
+    "humidity": 63.2
+  },
+  "tags": { "location": "greenhouse_north" }
+}
+```
+
+**How it works:** EMQX validates the API key on connect via a webhook to auth-service, enforces that the device only publishes to its own project's topic, then bridges each MQTT message directly to Kafka (`raw.ingest.af-ke-1`) where the ingestion-service picks it up — no HTTP round-trip involved.
 
 ### HTTP REST (Recommended for scripts and server-side apps)
 
@@ -1076,32 +1092,32 @@ Per-project drill-down:
 
 ```
 docker-compose.yml
-├── nginx              (reverse proxy, TLS, static frontend)
-├── frontend           (Vue.js built into Nginx image)
-├── auth-service       (Java Spring Boot, port 8081)
-├── ingestion-service  (Java Spring Boot, port 8082)
-├── alert-engine       (Java Spring Boot, port 8083)
-├── quota-service      (Java Spring Boot, port 8084)
-├── api-gateway        (Java Spring Boot, port 8080 — only port exposed externally via Nginx)
-├── notification-service (Java Spring Boot, port 8085)
-├── emqx               (EMQX broker, ports 1883, 8883, 8083/ws, 18083/dashboard)
-├── kafka              (Apache Kafka)
-├── zookeeper          (Kafka dependency — or use KRaft mode for Kafka 3.3+)
-├── timescaledb        (TimescaleDB, port 5432)
-├── redis              (Redis, port 6379)
-└── kafka-ui           (optional: Kafka management UI, dev only)
+├── frontend           (Vue.js built into Nginx image, host port 3000)
+├── api-gateway        (Java Spring Boot, host port 8080 — all API traffic enters here)
+├── auth-service       (Java Spring Boot, port 8081 — internal only)
+├── ingestion-service  (Java Spring Boot, port 8082 — internal only)
+├── alert-engine       (Java Spring Boot, port 8083 — internal only)
+├── quota-service      (Java Spring Boot, port 8084 — internal only)
+├── notification-service (Java Spring Boot, port 8085 — internal only)
+├── emqx               (EMQX broker, ports 1883/8883/8083ws exposed; 18083 dashboard on localhost only)
+├── kafka              (Apache Kafka — internal only)
+├── zookeeper          (Kafka dependency — internal only)
+├── timescaledb        (TimescaleDB — internal only)
+└── redis              (Redis — internal only)
 ```
 
 ### Network Design
 
-All services communicate on an internal Docker network `ioteca`. Only Nginx and EMQX expose ports to the host. No database or Kafka port is ever exposed externally.
+All services communicate on the internal Docker network `ioteca`. TLS termination and public routing is handled by **Nginx Proxy Manager** running outside the compose stack.
 
 ```
-External internet
+External internet (via Nginx Proxy Manager)
   │
-  ├── :443 (HTTPS) → Nginx → api-gateway (:8080)
-  ├── :8883 (MQTT TLS) → EMQX
-  └── :443/ws → Nginx → EMQX WebSocket bridge
+  ├── /api/** → api-gateway (:8080)   ← single entry for all REST traffic
+  ├── /*      → frontend (:3000)
+  ├── :1883   → EMQX (MQTT plain)
+  └── :8883   → EMQX (MQTT TLS)
+      :8083   → EMQX (MQTT WebSocket)
 ```
 
 ---
@@ -1163,7 +1179,7 @@ IoTeca/
 │   │   └── acl.conf
 │   ├── kafka/
 │   │   └── server.properties
-│   ├── nginx/
+│   ├── nginx/          # kept for reference; routing handled by Nginx Proxy Manager
 │   │   └── nginx.conf
 │   ├── postgres/
 │   │   ├── 01-init-schemas.sql
@@ -1205,10 +1221,11 @@ EMQX_API_URL=http://emqx:18083/api/v5
 EMQX_API_KEY=changeme
 EMQX_AUTH_WEBHOOK_SECRET=changeme
 
-# ---- Auth ----
+# ---- Auth / Gateway ----
 JWT_SECRET=changeme-min-32-chars
 JWT_EXPIRY_MINUTES=60
 JWT_REFRESH_EXPIRY_DAYS=30
+AUTH_SERVICE_URL=http://auth-service:8081
 
 # ---- Notification ----
 SMTP_HOST=smtp.example.com

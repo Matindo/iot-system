@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: io.ioteca.auth.service.ApiKeyServiceTest
 -------------------------------------------------------------------------------
-Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.705 s -- in io.ioteca.auth.service.ApiKeyServiceTest
+Tests run: 11, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.815 s -- in io.ioteca.auth.service.ApiKeyServiceTest

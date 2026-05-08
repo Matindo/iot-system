@@ -7,8 +7,7 @@
   },
 
   "variable": [
-    { "key": "auth_service_url", "value": "http://localhost:8081", "type": "string" },
-    { "key": "api_gateway_url",  "value": "http://localhost:8080", "type": "string" },
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
     { "key": "test_email",       "value": "", "type": "string" },
     { "key": "test_password",    "value": "TestPassword123!", "type": "string" },
     { "key": "access_token",     "value": "", "type": "string" },
@@ -25,7 +24,7 @@
   "item": [
 
     {
-      "name": "1 — Authentication (auth-service :8081)",
+      "name": "1 — Authentication",
       "item": [
 
         {
@@ -78,7 +77,7 @@
               "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"fullName\": \"IoT Tester\",\n  \"country\": \"KE\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/v1/auth/register", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","register"] }
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api","v1","auth","register"] }
           }
         },
 
@@ -118,7 +117,7 @@
               "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/v1/auth/login", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","login"] }
+            "url": { "raw": "{{base_url}}/api/v1/auth/login", "host": ["{{base_url}}"], "path": ["api","v1","auth","login"] }
           }
         },
 
@@ -147,7 +146,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{auth_service_url}}/api/v1/auth/me", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","me"] }
+            "url": { "raw": "{{base_url}}/api/v1/auth/me", "host": ["{{base_url}}"], "path": ["api","v1","auth","me"] }
           }
         },
 
@@ -179,7 +178,7 @@
               "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/v1/auth/refresh", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","refresh"] }
+            "url": { "raw": "{{base_url}}/api/v1/auth/refresh", "host": ["{{base_url}}"], "path": ["api","v1","auth","refresh"] }
           }
         }
       ]
@@ -228,7 +227,7 @@
               "raw": "{\n  \"name\": \"Nairobi Greenhouse Monitor\",\n  \"description\": \"Monitors temperature, humidity, and soil moisture across greenhouse sections\",\n  \"environment\": \"production\",\n  \"region\": \"af-ke-1\",\n  \"timezone\": \"Africa/Nairobi\",\n  \"expectedDeviceCount\": 10,\n  \"declaredSendIntervalS\": 30,\n  \"dataFormat\": \"json\",\n  \"alertEmail\": \"alerts@greenhouse.co.ke\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api","v1","projects"] }
           }
         },
 
@@ -256,7 +255,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api","v1","projects"] }
           }
         },
 
@@ -282,7 +281,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
           }
         },
 
@@ -316,7 +315,7 @@
               "raw": "{\n  \"name\": \"Nairobi Greenhouse Monitor\",\n  \"description\": \"Updated description v2 — added soil moisture sensors\",\n  \"alertEmail\": \"ops@greenhouse.co.ke\",\n  \"alertWebhookUrl\": \"https://hooks.greenhouse.co.ke/alerts\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
           }
         }
       ]
@@ -369,7 +368,7 @@
               "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"name\": \"Main sensor cluster\",\n  \"environment\": \"live\",\n  \"scopes\": [\"ingest\"]\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/v1/keys", "host": ["{{auth_service_url}}"], "path": ["api","v1","keys"] }
+            "url": { "raw": "{{base_url}}/api/v1/keys", "host": ["{{base_url}}"], "path": ["api","v1","keys"] }
           }
         },
 
@@ -399,8 +398,8 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": {
-              "raw": "{{auth_service_url}}/api/v1/keys?projectId={{project_id}}",
-              "host": ["{{auth_service_url}}"],
+              "raw": "{{base_url}}/api/v1/keys?projectId={{project_id}}",
+              "host": ["{{base_url}}"],
               "path": ["api","v1","keys"],
               "query": [{ "key": "projectId", "value": "{{project_id}}" }]
             }
@@ -430,8 +429,8 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{auth_service_url}}/api/internal/emqx/key/validate?key={{api_key_full}}",
-              "host": ["{{auth_service_url}}"],
+              "raw": "{{base_url}}/api/internal/emqx/key/validate?key={{api_key_full}}",
+              "host": ["{{base_url}}"],
               "path": ["api","internal","emqx","key","validate"],
               "query": [{ "key": "key", "value": "{{api_key_full}}" }]
             }
@@ -473,7 +472,7 @@
               "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"timestamp\": {{$timestamp}}000,\n  \"metrics\": {\n    \"temperature\": 26.4,\n    \"humidity\": 71.3,\n    \"battery_v\": 3.85,\n    \"soil_moisture\": 42.1\n  },\n  \"tags\": {\n    \"location\": \"greenhouse_north\",\n    \"section\": \"A3\",\n    \"firmware\": \"v1.2.3\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+            "url": { "raw": "{{base_url}}/api/v1/ingest", "host": ["{{base_url}}"], "path": ["api","v1","ingest"] }
           }
         },
 
@@ -502,7 +501,7 @@
               "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"metrics\": {\n    \"temperature\": 41.2,\n    \"humidity\": 98.5\n  },\n  \"tags\": { \"location\": \"greenhouse_north\", \"note\": \"anomaly_test\" }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+            "url": { "raw": "{{base_url}}/api/v1/ingest", "host": ["{{base_url}}"], "path": ["api","v1","ingest"] }
           }
         },
 
@@ -540,7 +539,7 @@
               "raw": "[\n  {\n    \"device_id\": \"sensor_ke_001\",\n    \"timestamp\": {{$timestamp}}000,\n    \"metrics\": { \"temperature\": 24.5, \"humidity\": 63.2, \"battery_v\": 3.7 },\n    \"tags\": { \"location\": \"section_A\", \"firmware\": \"v1.2.3\" }\n  },\n  {\n    \"device_id\": \"sensor_ke_002\",\n    \"timestamp\": {{$timestamp}}000,\n    \"metrics\": { \"temperature\": 25.1, \"humidity\": 68.0, \"soil_moisture\": 38.5 },\n    \"tags\": { \"location\": \"section_B\", \"firmware\": \"v1.2.3\" }\n  },\n  {\n    \"device_id\": \"sensor_ke_003\",\n    \"timestamp\": {{$timestamp}}000,\n    \"metrics\": { \"temperature\": 23.8, \"humidity\": 71.5, \"lux\": 1240.0 },\n    \"tags\": { \"location\": \"section_C\", \"firmware\": \"v1.3.0\" }\n  }\n]",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest/batch", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest","batch"] }
+            "url": { "raw": "{{base_url}}/api/v1/ingest/batch", "host": ["{{base_url}}"], "path": ["api","v1","ingest","batch"] }
           }
         },
 
@@ -585,7 +584,7 @@
               "raw": "{{oversized_batch}}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest/batch", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest","batch"] }
+            "url": { "raw": "{{base_url}}/api/v1/ingest/batch", "host": ["{{base_url}}"], "path": ["api","v1","ingest","batch"] }
           }
         }
       ]
@@ -626,7 +625,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/devices", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","devices"] }
           }
         },
 
@@ -654,7 +653,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
           }
         },
 
@@ -690,7 +689,7 @@
               "raw": "{\n  \"name\": \"Greenhouse North A3\",\n  \"locationLabel\": \"Section A — Row 3\",\n  \"latitude\": -1.2921,\n  \"longitude\": 36.8219,\n  \"tags\": { \"zone\": \"north\", \"crop\": \"tomatoes\" }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
           }
         }
       ]
@@ -735,7 +734,7 @@
               "raw": "{\n  \"name\": \"High temperature alert\",\n  \"metricName\": \"temperature\",\n  \"condition\": \"gt\",\n  \"threshold\": 35.0,\n  \"notificationChannels\": [\"email\"],\n  \"suppressionWindowS\": 300\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/alert-rules", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules"] }
           }
         },
 
@@ -763,7 +762,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/alert-rules", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules"] }
           }
         },
 
@@ -797,7 +796,7 @@
               "raw": "{\n  \"name\": \"High temperature alert — revised\",\n  \"metricName\": \"temperature\",\n  \"condition\": \"gt\",\n  \"threshold\": 38.0,\n  \"notificationChannels\": [\"email\"],\n  \"suppressionWindowS\": 600\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules","{{alert_rule_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules","{{alert_rule_id}}"] }
           }
         },
 
@@ -819,7 +818,7 @@
           "request": {
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules","{{alert_rule_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules","{{alert_rule_id}}"] }
           }
         }
       ]
@@ -858,7 +857,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data/metrics", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","data","metrics"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}/data/metrics", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}","data","metrics"] }
           }
         },
 
@@ -881,8 +880,8 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": {
-              "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data/metrics?deviceId={{device_id}}",
-              "host": ["{{api_gateway_url}}"],
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/data/metrics?deviceId={{device_id}}",
+              "host": ["{{base_url}}"],
               "path": ["api","v1","projects","{{project_id}}","data","metrics"],
               "query": [{ "key": "deviceId", "value": "{{device_id}}" }]
             }
@@ -929,8 +928,8 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": {
-              "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}",
-              "host": ["{{api_gateway_url}}"],
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}",
+              "host": ["{{base_url}}"],
               "path": ["api","v1","projects","{{project_id}}","data"],
               "query": [
                 { "key": "metric", "value": "{{metric_name}}" },
@@ -971,8 +970,8 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": {
-              "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}&deviceId={{device_id}}",
-              "host": ["{{api_gateway_url}}"],
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}&deviceId={{device_id}}",
+              "host": ["{{base_url}}"],
               "path": ["api","v1","projects","{{project_id}}","data"],
               "query": [
                 { "key": "metric",   "value": "{{metric_name}}" },
@@ -1019,7 +1018,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/admin/stats", "host": ["{{api_gateway_url}}"], "path": ["api","v1","admin","stats"] }
+            "url": { "raw": "{{base_url}}/api/v1/admin/stats", "host": ["{{base_url}}"], "path": ["api","v1","admin","stats"] }
           }
         }
       ]
@@ -1049,7 +1048,7 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api","v1","projects"] }
           }
         },
 
@@ -1072,7 +1071,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer this.is.not.a.valid.jwt" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects", "host": ["{{base_url}}"], "path": ["api","v1","projects"] }
           }
         },
 
@@ -1100,7 +1099,7 @@
               "raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmYWtlLXVzZXIiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MX0.invalidsig\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/v1/auth/refresh", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","refresh"] }
+            "url": { "raw": "{{base_url}}/api/v1/auth/refresh", "host": ["{{base_url}}"], "path": ["api","v1","auth","refresh"] }
           }
         },
 
@@ -1123,7 +1122,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/00000000-0000-0000-0000-000000000001", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","00000000-0000-0000-0000-000000000001"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/00000000-0000-0000-0000-000000000001", "host": ["{{base_url}}"], "path": ["api","v1","projects","00000000-0000-0000-0000-000000000001"] }
           }
         },
 
@@ -1154,7 +1153,7 @@
               "raw": "{\n  \"device_id\": \"hacker_device\",\n  \"metrics\": { \"temperature\": 99.9 }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+            "url": { "raw": "{{base_url}}/api/v1/ingest", "host": ["{{base_url}}"], "path": ["api","v1","ingest"] }
           }
         },
 
@@ -1184,7 +1183,7 @@
               "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"AnotherPassword99!\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/v1/auth/register", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","register"] }
+            "url": { "raw": "{{base_url}}/api/v1/auth/register", "host": ["{{base_url}}"], "path": ["api","v1","auth","register"] }
           }
         }
       ]
@@ -1220,7 +1219,7 @@
               "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"password\": \"{{api_key_full}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"peerhost\": \"196.201.214.5\",\n  \"proto_name\": \"MQTT\",\n  \"mountpoint\": null\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/auth", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","auth"] }
+            "url": { "raw": "{{base_url}}/api/internal/emqx/auth", "host": ["{{base_url}}"], "path": ["api","internal","emqx","auth"] }
           }
         },
 
@@ -1249,7 +1248,7 @@
               "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"password\": \"ioteca_live_badbadbad_thiskeyiscompletelyfake\",\n  \"clientid\": \"evil_device\",\n  \"peerhost\": \"1.2.3.4\",\n  \"proto_name\": \"MQTT\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/auth", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","auth"] }
+            "url": { "raw": "{{base_url}}/api/internal/emqx/auth", "host": ["{{base_url}}"], "path": ["api","internal","emqx","auth"] }
           }
         },
 
@@ -1278,7 +1277,7 @@
               "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"ioteca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
+            "url": { "raw": "{{base_url}}/api/internal/emqx/acl", "host": ["{{base_url}}"], "path": ["api","internal","emqx","acl"] }
           }
         },
 
@@ -1307,7 +1306,7 @@
               "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"ioteca/00000000-0000-0000-0000-999999999999/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
+            "url": { "raw": "{{base_url}}/api/internal/emqx/acl", "host": ["{{base_url}}"], "path": ["api","internal","emqx","acl"] }
           }
         },
 
@@ -1336,7 +1335,7 @@
               "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"ioteca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"subscribe\",\n  \"peerhost\": \"196.201.214.5\"\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
+            "url": { "raw": "{{base_url}}/api/internal/emqx/acl", "host": ["{{base_url}}"], "path": ["api","internal","emqx","acl"] }
           }
         }
       ]
@@ -1366,8 +1365,8 @@
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
             "url": {
-              "raw": "{{auth_service_url}}/api/v1/keys/{{api_key_id}}?reason=Test+cleanup",
-              "host": ["{{auth_service_url}}"],
+              "raw": "{{base_url}}/api/v1/keys/{{api_key_id}}?reason=Test+cleanup",
+              "host": ["{{base_url}}"],
               "path": ["api","v1","keys","{{api_key_id}}"],
               "query": [{ "key": "reason", "value": "Test cleanup" }]
             }
@@ -1401,7 +1400,7 @@
               "raw": "{ \"device_id\": \"post_revoke\", \"metrics\": { \"test\": 1 } }",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+            "url": { "raw": "{{base_url}}/api/v1/ingest", "host": ["{{base_url}}"], "path": ["api","v1","ingest"] }
           }
         },
 
@@ -1428,7 +1427,7 @@
           "request": {
             "method": "DELETE",
             "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
-            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
+            "url": { "raw": "{{base_url}}/api/v1/projects/{{project_id}}", "host": ["{{base_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
           }
         }
       ]

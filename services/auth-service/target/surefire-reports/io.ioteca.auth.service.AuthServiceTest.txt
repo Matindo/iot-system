@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: io.ioteca.auth.service.AuthServiceTest
 -------------------------------------------------------------------------------
-Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.031 s -- in io.ioteca.auth.service.AuthServiceTest
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.778 s -- in io.ioteca.auth.service.AuthServiceTest

@@ -70,7 +70,7 @@ public class IngestionService {
             rows.add(sd);
         }
 
-        // Bulk insert â€” each row goes via the native upsert
+        // Bulk insert — each row goes via the native upsert
         for (SensorData row : rows) {
             sensorDataRepository.insertRaw(row);
         }
@@ -85,7 +85,7 @@ public class IngestionService {
     private void ensureDeviceExists(UUID projectId, String deviceId, OffsetDateTime now) {
         int updated = deviceRepository.touchLastSeen(projectId, deviceId, now);
         if (updated == 0) {
-            // First time we see this device â€” auto-register it
+            // First time we see this device — auto-register it
             Device device = Device.builder()
                     .projectId(projectId)
                     .deviceId(deviceId)
@@ -95,7 +95,7 @@ public class IngestionService {
             try {
                 deviceRepository.save(device);
             } catch (Exception e) {
-                // Race condition â€” another thread inserted first; that's fine
+                // Race condition — another thread inserted first; that's fine
                 log.debug("Device auto-register race: project={} device={}", projectId, deviceId);
             }
         }
