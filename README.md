@@ -1,4 +1,4 @@
-# Afridata IoT Cloud Platform
+# IoTeka Cloud Platform
 
 > A multi-tenant IoT data ingestion, storage, and visualization platform built for Africa — starting with Kenya, designed to scale continent-wide.
 
