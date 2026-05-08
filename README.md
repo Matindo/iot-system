@@ -126,57 +126,216 @@ All services are containerized. Each box above is a separate Docker container, o
 
 ## 4. Service Breakdown
 
-The platform is composed of the following independent microservices. Each runs in its own container and communicates over the internal Docker/Kubernetes network.
+The platform is composed of the following independent microservices. Each runs in its own container and communicates over the internal Docker network (`afridata-internal`).
 
-### 4.1 `auth-service` (Java)
+---
 
-Handles all identity and access concerns:
-- User registration, login, JWT issuance and refresh
-- API key generation, hashing (SHA-256), and revocation
-- EMQX auth webhook endpoint — EMQX calls this on every device connection attempt
-- Role management: `USER`, `ADMIN`
+### 4.1 `auth-service` — Port 8081
 
-### 4.2 `ingestion-service` (Java)
+**Package:** `io.afridata.auth` · **Tech:** Spring Boot 3.2, Spring Security 6, JJWT 0.12
 
-Consumes from Kafka topic `raw.ingest.*`:
-- Validates message structure and payload size
-- Resolves project and device from the embedded project ID in the API key
-- Writes sensor readings to TimescaleDB hypertable `sensor_data`
-- Records device last-seen timestamp in PostgreSQL
-- Emits enriched message to `processed.ingest.*` topic for downstream consumers
+**Responsibilities**
 
-### 4.3 `alert-engine-service` (Java)
+| Concern | Mechanism |
+|---|---|
+| User registration | Validates email uniqueness, bcrypt-hashes password, assigns FREE tier subscription |
+| Login | Verifies password against bcrypt hash, issues access + refresh JWT pair |
+| JWT issuance | HS256, signed with `JWT_SECRET`; access token 60 min, refresh token 30 days |
+| Token refresh | Validates refresh token `type` claim, issues new access token without re-login |
+| API key generation | Produces `afridata_{env}_{project_short_id}_{20char_secret}`, stores SHA-256 hash only |
+| API key revocation | Sets `is_active=false`, stamps `revoked_at`, records reason |
+| EMQX auth webhook | Validates API key hash + project ownership on every device connect attempt |
+| EMQX ACL webhook | Enforces topic-level publish rights: device may only publish to `afridata/{its_project_id}/#` |
 
-Consumes from `processed.ingest.*`:
-- Evaluates user-defined alert rules (threshold, absence, rate-of-change)
-- Fires webhook POST requests to user-configured endpoints
-- Sends email/SMS notifications on rule triggers
-- Manages alert state (suppression windows to prevent flooding)
+**REST Endpoints**
 
-### 4.4 `quota-service` (Java)
+```
+POST /api/v1/auth/register          — create account, returns JWT pair
+POST /api/v1/auth/login             — returns JWT pair
+POST /api/v1/auth/refresh           — exchange refresh token for new access token
+GET  /api/v1/auth/me                — current user profile [JWT required]
+POST /api/v1/keys                   — create API key [JWT required]
+GET  /api/v1/keys?projectId={uuid}  — list project's API keys [JWT required]
+DELETE /api/v1/keys/{id}            — revoke key [JWT required]
+POST /api/internal/emqx/auth        — EMQX auth webhook (internal network only)
+POST /api/internal/emqx/acl         — EMQX ACL webhook (internal network only)
+GET  /api/internal/emqx/key/validate?key={k} — key validation for other services
+```
 
-Consumes from `raw.ingest.*`:
-- Increments per-project daily message counter in Redis (`project:{id}:msgs:{date}`)
-- Increments per-project storage estimate counter
-- Checks counters against tier limits; publishes quota events to `quota.events` topic
-- Handles quota warning (at 80%) and hard-limit enforcement (at 100%)
+**Key implementation details**
 
-### 4.5 `api-gateway-service` (Java Spring Boot)
+- `JwtService` — issues and validates tokens locally; shared `JWT_SECRET` allows api-gateway to validate without calling auth-service on every request
+- `ApiKeyService` — API key format: `afridata_{live|test}_{8-char project id}_{20-char URL-safe base64 secret}`; first 20 chars stored as `key_prefix` for UI display, rest stored only as `SHA-256(full_key)`
+- `JwtAuthenticationFilter` — extracts `Bearer` token per request, sets Spring Security context
+- Security: `/api/internal/**` and `/api/v1/auth/**` are permit-all at the filter chain; all other routes require a valid, non-refresh JWT
 
-The single external-facing HTTP service:
-- Authenticates all requests via JWT or API key header
-- Routes to internal services
-- Enforces per-user and per-project API rate limits (token bucket via Redis)
-- Exposes REST endpoints for: auth, projects, devices, keys, data query, admin operations
-- Provides the HTTP REST ingestion fallback endpoint for devices that cannot use MQTT
+---
 
-### 4.6 `notification-service` (Java)
+### 4.2 `ingestion-service` — Port 8082
 
-Listens to `quota.events` and `alert.events` Kafka topics:
-- Sends quota warning emails at 80% usage
-- Sends quota exceeded emails at 100% with subscription upgrade link
-- Sends alert notifications (email, webhook)
-- Manages notification deduplication to prevent spam
+**Package:** `io.afridata.ingestion` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data JPA
+
+**Responsibilities**
+
+| Concern | Mechanism |
+|---|---|
+| Consume raw messages | Kafka listener on `raw.ingest.af-ke-1`, concurrency=3 |
+| Payload validation | Rejects messages missing `device_id` or empty `metrics` map; bad messages are acked immediately (no retry) |
+| Narrow-row storage | Each metric key in the payload becomes a separate row in `tsdata.sensor_data` (wide payloads → multiple rows) |
+| Timestamp handling | Uses device-supplied `timestamp` (epoch ms) if present; falls back to server ingestion time |
+| Device auto-registration | First message from an unknown `device_id` inserts a new row in `platform.devices`; subsequent messages update `last_seen_at` |
+| Downstream fan-out | After successful write, emits `ProcessedMessage` to `processed.ingest.af-ke-1` for alert-engine and other consumers |
+
+**Data flow**
+
+```
+Kafka raw.ingest.af-ke-1
+  → RawIngestConsumer (concurrency 3)
+    → IngestionService.ingest()
+      → SensorDataRepository.insertRaw()   → tsdata.sensor_data
+      → DeviceRepository.touchLastSeen()   → platform.devices
+    → KafkaTemplate.send(processed.ingest.af-ke-1)
+```
+
+**Key implementation details**
+
+- `SensorData` entity uses a composite `@IdClass` of `(time, projectId, deviceId, metric)` matching the hypertable's natural key
+- `insertRaw()` uses a native SQL upsert with `ON CONFLICT DO NOTHING` to safely handle duplicate delivery
+- Project ID is resolved from: (1) `project_id` field in the JSON body (set by api-gateway for HTTP ingestion), or (2) the Kafka message key (set by the EMQX-Kafka bridge for MQTT ingestion)
+
+---
+
+### 4.3 `alert-engine` — Port 8083
+
+**Package:** `io.afridata.alert` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data JPA
+
+**Responsibilities**
+
+| Concern | Mechanism |
+|---|---|
+| Consume processed messages | Kafka listener on `processed.ingest.af-ke-1`, concurrency=2 |
+| Rule lookup | For each metric in the message, queries `platform.alert_rules` matching project + metric + device (or all devices) |
+| Condition evaluation | Supports: `gt`, `gte`, `lt`, `lte`, `eq`; non-numeric metric values are skipped |
+| Suppression | Skips firing if `last_fired_at + suppression_window_s > now()` — prevents alert flooding |
+| Alert event emission | Writes `AlertEvent` to Kafka topic `alert.events`; notification-service handles delivery |
+
+**Supported conditions**
+
+| Condition | Description |
+|---|---|
+| `gt` | Fires when value > threshold |
+| `gte` | Fires when value ≥ threshold |
+| `lt` | Fires when value < threshold |
+| `lte` | Fires when value ≤ threshold |
+| `eq` | Fires when value == threshold |
+| `absence` | Planned — fires when no message received within `absence_window_s` |
+
+**Key implementation details**
+
+- `AlertEvaluator` stamps `last_fired_at` on the rule before emitting the event (within the same transaction), preventing race conditions in concurrent consumers
+- Rules with `device_id = NULL` apply to all devices in the project; device-specific rules take precedence
+- Evaluation errors (bad JSON, DB failure) are caught and acked — they don't block the pipeline
+
+---
+
+### 4.4 `quota-service` — Port 8084
+
+**Package:** `io.afridata.quota` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data Redis, Spring Data JPA
+
+**Responsibilities**
+
+| Concern | Mechanism |
+|---|---|
+| Message counting | O(1) atomic `INCR` on Redis key `project:{id}:msgs:{YYYY-MM-DD}` |
+| Counter TTL | Set to 172,800 s (2 days) on first write; resets automatically at midnight |
+| Tier limit lookup | Joins `user_subscriptions → subscription_tiers` to find the active tier's `max_messages_per_day` |
+| Quota events | Publishes to `quota.events` when count crosses 80% (`WARNING_80`) or 100% (`EXCEEDED`) of limit |
+| Unlimited tiers | `max_messages_per_day = -1` short-circuits all checks — Enterprise tier never throttled |
+
+**Redis key design**
+
+```
+project:{uuid}:msgs:2025-08-15   →   atomic counter, TTL 2 days
+```
+
+**Key implementation details**
+
+- Quota-service and ingestion-service both consume `raw.ingest.af-ke-1` with **different consumer group IDs** — each receives every message independently
+- Quota checks happen after the message is already written to TimescaleDB; enforcement at 100% is done at the broker level (EMQX rate limiter) and at the api-gateway (HTTP 429)
+- `QuotaStatus` enum: `OK` | `WARNING_80` | `EXCEEDED`
+
+---
+
+### 4.5 `api-gateway` — Port 8080 (external-facing)
+
+**Package:** `io.afridata.gateway` · **Tech:** Spring Boot 3.2, Spring Security 6, Spring Kafka, Spring Data Redis, JJWT
+
+**Responsibilities**
+
+| Concern | Mechanism |
+|---|---|
+| JWT validation | Validates `Bearer` tokens locally using shared `JWT_SECRET` — no auth-service call per request |
+| Rate limiting | Redis token-bucket per user: `ratelimit:{userId}:api` incremented per request, TTL 1 min |
+| HTTP ingestion | Validates JWT, adds `project_id` to payload, publishes to `raw.ingest.af-ke-1` |
+| Batch ingestion | Accepts up to 100 readings per POST; each published as an individual Kafka message |
+| Project management | Full CRUD for `platform.projects`, scoped to the authenticated user |
+| Device management | Read + patch for `platform.devices`, scoped to project ownership |
+| Auth pass-through | `/api/v1/auth/**` is permit-all; clients call auth-service endpoints proxied through here |
+
+**REST Endpoints**
+
+```
+POST /api/v1/ingest                         — single reading [JWT or API key]
+POST /api/v1/ingest/batch                   — up to 100 readings [JWT or API key]
+GET  /api/v1/projects                       — list user projects [JWT]
+POST /api/v1/projects                       — create project [JWT]
+GET  /api/v1/projects/{id}                  — get project [JWT]
+PUT  /api/v1/projects/{id}                  — update project [JWT]
+DELETE /api/v1/projects/{id}                — soft-delete project [JWT]
+GET  /api/v1/projects/{id}/devices          — list devices [JWT]
+GET  /api/v1/projects/{id}/devices/{did}    — get device [JWT]
+PATCH /api/v1/projects/{id}/devices/{did}   — update device metadata [JWT]
+GET  /api/v1/admin/**                       — admin endpoints [ROLE_ADMIN]
+```
+
+**Key implementation details**
+
+- `JwtAuthenticationFilter` mirrors the one in auth-service — same secret, same validation logic, no cross-service call
+- Project soft-delete sets `is_active=false` rather than deleting rows, preserving TimescaleDB data for the retention window
+- `IngestController` resolves project ID from the JWT subject (user → project lookup) for HTTP ingestion; the Kafka message key is set to `project_id` so ingestion-service can correlate it
+
+---
+
+### 4.6 `notification-service` — Port 8085
+
+**Package:** `io.afridata.notification` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Mail, Spring Data JPA
+
+**Responsibilities**
+
+| Concern | Mechanism |
+|---|---|
+| Quota warnings | Consumes `quota.events`; sends email at `WARNING_80` and `EXCEEDED` |
+| Alert notifications | Consumes `alert.events`; delivers via email and/or webhook per rule's `notification_channels` |
+| Deduplication | Checks `notification_log` for same `(project_id, type)` within configurable window before sending |
+| Audit trail | Every send attempt (success or failure) is written to `platform.notification_log` |
+| Webhook delivery | HTTP POST to `project.alert_webhook_url` with full alert event payload |
+
+**Email templates**
+
+| Type | Trigger | Content |
+|---|---|---|
+| `QUOTA_WARNING` | 80% of daily limit consumed | Usage count, limit, upgrade link |
+| `QUOTA_EXCEEDED` | 100% of daily limit consumed | Rejection notice, upgrade link |
+| `ALERT` | Alert rule fires | Device, metric, value, condition, rule ID |
+
+**Key implementation details**
+
+- Recipient email priority: `project.alert_email` → project owner's `users.email`
+- All Kafka consumption errors are caught and acked — a failed notification does not stall the pipeline
+- `EmailService.wasSentRecently()` prevents duplicate emails within a 60-minute window for the same project + type
+- SMTP configuration maps to standard Spring Mail properties via env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`)
+
+---
 
 ### 4.7 `frontend` (Vue.js)
 
