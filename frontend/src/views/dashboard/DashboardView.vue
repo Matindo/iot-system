@@ -113,8 +113,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
-import { useProjectStore } from '../../store/project.js'
+import { mapState, mapActions } from 'vuex'
 import api from '../../api/client.js'
 import TimeSeriesChart from '../../components/charts/TimeSeriesChart.vue'
 import DeviceMap from '../../components/map/DeviceMap.vue'
@@ -142,7 +141,7 @@ export default {
   },
 
   computed: {
-    ...mapState(useProjectStore, ['current']),
+    ...mapState('project', ['current']),
 
     devicesOnMap() {
       return this.devices.filter((d) => d.latitude && d.longitude).length
@@ -160,15 +159,13 @@ export default {
   },
 
   async mounted() {
-    const projectStore = useProjectStore()
-    if (projectStore.projects.length === 0) {
-      await projectStore.fetchProjects().catch(() => {})
+    if (this.$store.state.project.projects.length === 0) {
+      await this.$store.dispatch('project/fetchProjects').catch(() => {})
     }
     if (this.current) await this.loadData()
   },
 
   methods: {
-    ...mapActions(useProjectStore, ['fetchProjects']),
 
     timeRangeToParams() {
       const to   = new Date()

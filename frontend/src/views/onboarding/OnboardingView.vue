@@ -54,8 +54,7 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
-import { useProjectStore } from '../../store/project.js'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'OnboardingView',
@@ -78,7 +77,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(useProjectStore, ['createProject']),
+    ...mapActions('project', ['createProject']),
 
     async submit() {
       this.error = ''

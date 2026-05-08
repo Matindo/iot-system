@@ -23,25 +23,23 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
-import { useAuthStore } from '../../store/auth.js'
-import { useProjectStore } from '../../store/project.js'
+import { mapState, mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'NavBar',
 
   computed: {
-    ...mapState(useAuthStore, ['user', 'isAdmin']),
-    ...mapState(useProjectStore, ['projects', 'current']),
+    ...mapState('auth', ['user']),
+    ...mapGetters('auth', ['isAdmin']),
+    ...mapState('project', ['projects', 'current']),
   },
 
   methods: {
-    ...mapActions(useAuthStore, ['logout']),
-    ...mapActions(useProjectStore, ['select']),
+    ...mapActions('auth', ['logout']),
+    ...mapActions('project', ['select']),
 
     onProjectChange(e) {
-      const projectStore = useProjectStore()
-      const project = projectStore.projects.find((p) => p.id === e.target.value)
+      const project = this.projects.find((p) => p.id === e.target.value)
       if (project) this.select(project)
     },
 

@@ -6,9 +6,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
-import { useAuthStore } from './store/auth.js'
-import { useProjectStore } from './store/project.js'
+import { mapGetters } from 'vuex'
 import NavBar from './components/ui/NavBar.vue'
 
 export default {
@@ -16,13 +14,12 @@ export default {
   components: { NavBar },
 
   computed: {
-    ...mapState(useAuthStore, ['isAuthenticated']),
+    ...mapGetters('auth', ['isAuthenticated']),
   },
 
   async mounted() {
-    const projectStore = useProjectStore()
-    if (this.isAuthenticated && projectStore.projects.length === 0) {
-      await projectStore.fetchProjects().catch(() => {})
+    if (this.isAuthenticated && this.$store.state.project.projects.length === 0) {
+      await this.$store.dispatch('project/fetchProjects').catch(() => {})
     }
   },
 }

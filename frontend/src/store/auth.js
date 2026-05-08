@@ -1,7 +1,8 @@
-import { defineStore } from 'pinia'
 import api from '../api/client.js'
 
-export const useAuthStore = defineStore('auth', {
+export default {
+  namespaced: true,
+
   state: () => ({
     user: JSON.parse(localStorage.getItem('user') || 'null'),
     accessToken: localStorage.getItem('accessToken') || null,
@@ -12,35 +13,38 @@ export const useAuthStore = defineStore('auth', {
     isAdmin: (state) => state.user?.role === 'ADMIN',
   },
 
+  mutations: {
+    SET_USER(state, user) { state.user = user },
+    SET_TOKEN(state, token) { state.accessToken = token },
+    CLEAR(state) { state.user = null; state.accessToken = null },
+  },
+
   actions: {
-    async login(email, password) {
+    async login({ commit, dispatch }, { email, password }) {
       const { data } = await api.post('/api/v1/auth/login', { email, password })
-      this._persist(data)
-      await this.fetchMe()
+      commit('SET_TOKEN', data.accessToken)
+      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      await dispatch('fetchMe')
     },
 
-    async register(email, password) {
+    async register({ commit, dispatch }, { email, password }) {
       const { data } = await api.post('/api/v1/auth/register', { email, password })
-      this._persist(data)
-      await this.fetchMe()
+      commit('SET_TOKEN', data.accessToken)
+      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('refreshToken', data.refreshToken)
+      await dispatch('fetchMe')
     },
 
-    async fetchMe() {
+    async fetchMe({ commit }) {
       const { data } = await api.get('/api/v1/auth/me')
-      this.user = data
+      commit('SET_USER', data)
       localStorage.setItem('user', JSON.stringify(data))
     },
 
-    logout() {
+    logout({ commit }) {
       localStorage.clear()
-      this.user = null
-      this.accessToken = null
-    },
-
-    _persist(data) {
-      this.accessToken = data.accessToken
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('refreshToken', data.refreshToken)
+      commit('CLEAR')
     },
   },
-})
+}

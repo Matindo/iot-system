@@ -1,8 +1,23 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useAuthStore } from '../store/auth.js'
+import store from '../store/index.js'
 
 const routes = [
-  { path: '/', redirect: '/dashboard' },
+  {
+    path: '/',
+    component: () => import('../views/landing/LandingView.vue'),
+  },
+  {
+    path: '/about',
+    component: () => import('../views/about/AboutView.vue'),
+  },
+  {
+    path: '/terms',
+    component: () => import('../views/legal/TermsView.vue'),
+  },
+  {
+    path: '/privacy',
+    component: () => import('../views/legal/PrivacyView.vue'),
+  },
   {
     path: '/login',
     component: () => import('../views/auth/LoginView.vue'),
@@ -41,10 +56,11 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const auth = useAuthStore()
-  if (to.meta.requiresAuth && !auth.isAuthenticated) return next('/login')
-  if (to.meta.requiresAdmin && !auth.isAdmin) return next('/dashboard')
-  if (to.meta.guest && auth.isAuthenticated) return next('/dashboard')
+  const isAuthenticated = store.getters['auth/isAuthenticated']
+  const isAdmin = store.getters['auth/isAdmin']
+  if (to.meta.requiresAuth && !isAuthenticated) return next('/login')
+  if (to.meta.requiresAdmin && !isAdmin) return next('/dashboard')
+  if (to.meta.guest && isAuthenticated) return next('/dashboard')
   next()
 })
 

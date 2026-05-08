@@ -203,8 +203,7 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
-import { useProjectStore } from '../../store/project.js'
+import { mapActions } from 'vuex'
 import api from '../../api/client.js'
 
 export default {
@@ -245,7 +244,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(useProjectStore, ['updateProject']),
+    ...mapActions('project', ['updateProject']),
 
     async loadProject() {
       const id = this.$route.params.id
@@ -279,7 +278,7 @@ export default {
       this.savingSettings = true
       this.settingsMsg = ''
       try {
-        const updated = await this.updateProject(this.$route.params.id, this.settingsForm)
+        const updated = await this.updateProject({ id: this.$route.params.id, payload: this.settingsForm })
         this.project = updated
         this.settingsMsg = 'Settings saved.'
         setTimeout(() => { this.settingsMsg = '' }, 3000)

@@ -1,8 +1,8 @@
-﻿{
+{
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-    "name": "IoTeca IoT Platform â€” API Tests",
-    "description": "Complete API test suite covering authentication, project management, data ingestion, device management, alert rules, data query, admin stats, and EMQX webhooks.\n\n**Run order:** Execute folders top-to-bottom. Variables are set automatically by test scripts.\n\n**Timeliness:** Every request asserts response time < 500 ms.\n\n**Auth:** Folder 1 (Auth) sets `access_token` and `refresh_token`. Folder 3 (API Keys) sets `api_key_full`. Ingest requests use the API key; all other protected requests use the JWT.\n\n**Async note:** Folders 5 (Devices), 7 (Data Query) depend on Kafka consumers having processed ingest messages. Allow a few seconds after running folder 4 before running these.",
+    "name": "IoTeca IoT Platform — API Tests",
+    "description": "Complete API test suite covering authentication, project management, data ingestion, device management, alert rules, data query, admin stats, and EMQX webhooks.\n\n**Run order:** Execute folders top-to-bottom. Variables are set automatically by test scripts.\n\n**Timeliness:** Every request asserts response time < 500 ms.\n\n**Auth:** Folder 1 (Auth) sets `access_token` and `refresh_token`. Folder 3 (API Keys) sets `api_key_full`. Ingest requests use the API key; all other protected requests use the JWT.\n\n**Async note:** Folders 5 (Devices) and 7 (Data Query) depend on Kafka consumers having processed ingest messages. Allow a few seconds after running folder 4 before running these.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
 
@@ -25,7 +25,7 @@
   "item": [
 
     {
-      "name": "1 â€” Authentication (auth-service :8081)",
+      "name": "1 — Authentication (auth-service :8081)",
       "item": [
 
         {
@@ -47,11 +47,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Auth response schema is valid', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r).to.have.all.keys('accessToken','refreshToken','tokenType','expiresIn','userId','email','role');",
@@ -63,7 +59,6 @@
                   "    pm.expect(r.email).to.equal(pm.collectionVariables.get('test_email'));",
                   "    pm.expect(r.role).to.equal('USER');",
                   "});",
-                  "",
                   "pm.test('Sets auth tokens in collection variables', () => {",
                   "    const r = pm.response.json();",
                   "    pm.collectionVariables.set('access_token',  r.accessToken);",
@@ -96,11 +91,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Auth response schema is valid', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.accessToken).to.be.a('string').with.lengthOf.above(20);",
@@ -109,7 +100,6 @@
                   "    pm.expect(r.expiresIn).to.be.a('number').and.above(0);",
                   "    pm.expect(r.role).to.equal('USER');",
                   "});",
-                  "",
                   "pm.test('Refreshes tokens in collection variables', () => {",
                   "    const r = pm.response.json();",
                   "    pm.collectionVariables.set('access_token',  r.accessToken);",
@@ -141,11 +131,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('User profile schema is valid', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r).to.include.all.keys('id','email','role','emailVerified','createdAt');",
@@ -174,23 +160,12 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Returns new access token', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.accessToken).to.be.a('string').with.lengthOf.above(20);",
                   "    pm.expect(r.tokenType).to.equal('Bearer');",
-                  "    // Update the stored token so subsequent requests stay valid",
                   "    pm.collectionVariables.set('access_token', r.accessToken);",
-                  "});",
-                  "",
-                  "pm.test('Reject â€” invalid refresh token returns 401', () => {",
-                  "    // Note: this assertion is on the current (valid) response.",
-                  "    // The separate 'Security Tests' folder covers the 401 case.",
-                  "    pm.expect(pm.response.code).to.not.equal(401);",
                   "});"
                 ]
               }
@@ -211,7 +186,7 @@
     },
 
     {
-      "name": "2 â€” Projects (api-gateway :8080)",
+      "name": "2 — Projects (api-gateway :8080)",
       "item": [
 
         {
@@ -223,11 +198,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Project schema is valid', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
@@ -237,7 +208,6 @@
                   "    pm.expect(r.isActive).to.be.true;",
                   "    pm.expect(r.createdAt).to.be.a('string');",
                   "});",
-                  "",
                   "pm.test('Sets project_id variable', () => {",
                   "    const r = pm.response.json();",
                   "    pm.collectionVariables.set('project_id', r.id);",
@@ -271,11 +241,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Returns array containing newly created project', () => {",
                   "    const projects = pm.response.json();",
                   "    pm.expect(projects).to.be.an('array').with.lengthOf.at.least(1);",
@@ -303,11 +269,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Project ID matches requested ID', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.id).to.equal(pm.collectionVariables.get('project_id'));",
@@ -333,11 +295,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Updated fields are reflected', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.description).to.include('v2');",
@@ -355,7 +313,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Nairobi Greenhouse Monitor\",\n  \"description\": \"Updated description v2 â€” added soil moisture sensors\",\n  \"alertEmail\": \"ops@greenhouse.co.ke\",\n  \"alertWebhookUrl\": \"https://hooks.greenhouse.co.ke/alerts\"\n}",
+              "raw": "{\n  \"name\": \"Nairobi Greenhouse Monitor\",\n  \"description\": \"Updated description v2 — added soil moisture sensors\",\n  \"alertEmail\": \"ops@greenhouse.co.ke\",\n  \"alertWebhookUrl\": \"https://hooks.greenhouse.co.ke/alerts\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
@@ -365,7 +323,7 @@
     },
 
     {
-      "name": "3 â€” API Keys (auth-service :8081)",
+      "name": "3 — API Keys (auth-service :8081)",
       "item": [
 
         {
@@ -377,11 +335,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('API key creation response schema', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
@@ -391,12 +345,9 @@
                   "    pm.expect(r.environment).to.equal('live');",
                   "    pm.expect(r.scopes).to.include('ingest');",
                   "});",
-                  "",
                   "pm.test('fullKey starts with platform prefix', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.fullKey).to.startWith('ioteca_');",
+                  "    pm.expect(pm.response.json().fullKey).to.startWith('ioteca_');",
                   "});",
-                  "",
                   "pm.test('Stores key in collection variables (shown once only)', () => {",
                   "    const r = pm.response.json();",
                   "    pm.collectionVariables.set('api_key_id',   r.id);",
@@ -431,18 +382,13 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Returns array with created key', () => {",
                   "    const keys = pm.response.json();",
                   "    pm.expect(keys).to.be.an('array').with.lengthOf.at.least(1);",
                   "    const key = keys.find(k => k.id === pm.collectionVariables.get('api_key_id'));",
                   "    pm.expect(key).to.not.be.undefined;",
                   "    pm.expect(key.isActive).to.be.true;",
-                  "    // fullKey must NOT appear in list response â€” shown once only at creation",
                   "    pm.expect(key.fullKey).to.be.undefined;",
                   "});"
                 ]
@@ -459,17 +405,48 @@
               "query": [{ "key": "projectId", "value": "{{project_id}}" }]
             }
           }
+        },
+
+        {
+          "name": "Validate API key (internal — used by api-gateway)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Returns valid key info', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.valid).to.be.true;",
+                  "    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{auth_service_url}}/api/internal/emqx/key/validate?key={{api_key_full}}",
+              "host": ["{{auth_service_url}}"],
+              "path": ["api","internal","emqx","key","validate"],
+              "query": [{ "key": "key", "value": "{{api_key_full}}" }]
+            }
+          }
         }
       ]
     },
 
     {
-      "name": "4 â€” Data Ingestion (api-gateway :8080)",
-      "description": "These requests use the API key (not a JWT) â€” simulating actual device behaviour.",
+      "name": "4 — Data Ingestion (api-gateway :8080)",
+      "description": "These requests use the API key (not a JWT) — simulating actual device behaviour.",
       "item": [
 
         {
-          "name": "Single ingest â€” temperature + humidity reading",
+          "name": "Single ingest — temperature + humidity reading",
           "event": [
             {
               "listen": "test",
@@ -477,11 +454,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Response body is empty (fire-and-forget)', () => {",
                   "    pm.expect(pm.response.text()).to.have.lengthOf(0);",
                   "});"
@@ -505,7 +478,7 @@
         },
 
         {
-          "name": "Single ingest â€” anomaly reading (triggers alert rule if configured)",
+          "name": "Single ingest — anomaly reading (triggers alert rule if configured)",
           "event": [
             {
               "listen": "test",
@@ -513,10 +486,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -537,7 +507,7 @@
         },
 
         {
-          "name": "Batch ingest â€” 3 devices, multiple metrics",
+          "name": "Batch ingest — 3 devices, multiple metrics",
           "event": [
             {
               "listen": "test",
@@ -545,21 +515,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Batch response schema is valid', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r).to.have.all.keys('accepted','total');",
                   "    pm.expect(r.total).to.equal(3);",
                   "    pm.expect(r.accepted).to.be.a('number').and.at.most(3);",
                   "});",
-                  "",
                   "pm.test('All 3 messages were accepted', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.accepted).to.equal(3);",
+                  "    pm.expect(pm.response.json().accepted).to.equal(3);",
                   "});"
                 ]
               }
@@ -581,14 +545,13 @@
         },
 
         {
-          "name": "Batch ingest â€” reject oversized batch (101 items)",
+          "name": "Batch ingest — reject oversized batch (101 items)",
           "event": [
             {
               "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Build a 101-item array to verify the 400 rejection",
                   "const batch = Array.from({length: 101}, (_, i) => ({",
                   "    device_id: `flood_sensor_${i}`,",
                   "    metrics: { value: Math.random() * 100 }",
@@ -602,17 +565,10 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status is 400 Bad Request for oversized batch', () => {",
-                  "    pm.response.to.have.status(400);",
-                  "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Status is 400 Bad Request for oversized batch', () => pm.response.to.have.status(400));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Error message mentions batch size limit', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.error).to.include('100');",
+                  "    pm.expect(pm.response.json().error).to.include('100');",
                   "});"
                 ]
               }
@@ -636,7 +592,7 @@
     },
 
     {
-      "name": "5 â€” Devices (api-gateway :8080)",
+      "name": "5 — Devices (api-gateway :8080)",
       "description": "Devices are auto-registered on first ingest. Allow a few seconds after the ingest tests for Kafka consumption and TimescaleDB writes to complete.",
       "item": [
 
@@ -649,27 +605,18 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
-                  "pm.test('Response is an array', () => {",
-                  "    pm.expect(pm.response.json()).to.be.an('array');",
-                  "});",
-                  "",
-                  "pm.test('Ingested device appears (async â€” may be empty if Kafka not yet consumed)', () => {",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Ingested device appears (async — may be empty if Kafka not yet consumed)', () => {",
                   "    const devices = pm.response.json();",
-                  "    // Not a hard failure â€” Kafka ingestion is async.",
                   "    if (devices.length > 0) {",
                   "        const device = devices[0];",
                   "        pm.expect(device.projectId).to.equal(pm.collectionVariables.get('project_id'));",
                   "        pm.expect(device.deviceId).to.be.a('string').and.not.empty;",
                   "        pm.expect(device.isActive).to.be.true;",
-                  "        // Store first device_id for follow-up tests",
                   "        pm.collectionVariables.set('device_id', device.deviceId);",
                   "    } else {",
-                  "        console.warn('No devices yet â€” re-run after Kafka consumers have processed the ingest messages');",
+                  "        console.warn('No devices yet — re-run after Kafka consumers have processed the ingest messages');",
                   "    }",
                   "});"
                 ]
@@ -692,11 +639,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Device schema is valid', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
@@ -724,15 +667,11 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Updated fields are reflected', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.name).to.equal('Greenhouse North A3');",
-                  "    pm.expect(r.locationLabel).to.equal('Section A â€” Row 3');",
+                  "    pm.expect(r.locationLabel).to.equal('Section A — Row 3');",
                   "    pm.expect(r.latitude).to.be.closeTo(-1.2921, 0.001);",
                   "    pm.expect(r.longitude).to.be.closeTo(36.8219, 0.001);",
                   "});"
@@ -748,7 +687,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Greenhouse North A3\",\n  \"locationLabel\": \"Section A â€” Row 3\",\n  \"latitude\": -1.2921,\n  \"longitude\": 36.8219,\n  \"tags\": { \"zone\": \"north\", \"crop\": \"tomatoes\" }\n}",
+              "raw": "{\n  \"name\": \"Greenhouse North A3\",\n  \"locationLabel\": \"Section A — Row 3\",\n  \"latitude\": -1.2921,\n  \"longitude\": 36.8219,\n  \"tags\": { \"zone\": \"north\", \"crop\": \"tomatoes\" }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
@@ -758,291 +697,288 @@
     },
 
     {
-      “name”: “6 â€” Alert Rules (api-gateway :8080)”,
-      “description”: “Create and manage alert rules for a project. Run after folder 2 (Projects).”,
-      “item”: [
+      "name": "6 — Alert Rules (api-gateway :8080)",
+      "item": [
 
         {
-          “name”: “Create alert rule â€” temperature high”,
-          “event”: [
+          "name": "Create alert rule — temperature high",
+          "event": [
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 201 Created', () => pm.response.to.have.status(201));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “pm.test('Alert rule schema is valid', () => {“,
-                  “    const r = pm.response.json();”,
-                  “    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);”,
-                  “    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));”,
-                  “    pm.expect(r.metricName).to.equal('temperature');”,
-                  “    pm.expect(r.condition).to.equal('gt');”,
-                  “    pm.expect(r.threshold).to.equal(35.0);”,
-                  “    pm.expect(r.isActive).to.be.true;”,
-                  “    pm.collectionVariables.set('alert_rule_id', r.id);”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Alert rule schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));",
+                  "    pm.expect(r.metricName).to.equal('temperature');",
+                  "    pm.expect(r.condition).to.equal('gt');",
+                  "    pm.expect(r.threshold).to.equal(35.0);",
+                  "    pm.expect(r.isActive).to.be.true;",
+                  "    pm.collectionVariables.set('alert_rule_id', r.id);",
+                  "});"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “POST”,
-            “header”: [
-              { “key”: “Content-Type”,  “value”: “application/json” },
-              { “key”: “Authorization”, “value”: “Bearer {{access_token}}” }
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
-            “body”: {
-              “mode”: “raw”,
-              “raw”: “{\n  \”name\”: \”High temperature alert\”,\n  \”metricName\”: \”temperature\”,\n  \”condition\”: \”gt\”,\n  \”threshold\”: 35.0,\n  \”notificationChannels\”: [\”email\”],\n  \”suppressionWindowS\”: 300\n}”,
-              “options”: { “raw”: { “language”: “json” } }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"High temperature alert\",\n  \"metricName\": \"temperature\",\n  \"condition\": \"gt\",\n  \"threshold\": 35.0,\n  \"notificationChannels\": [\"email\"],\n  \"suppressionWindowS\": 300\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”] }
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules"] }
           }
         },
 
         {
-          “name”: “List alert rules”,
-          “event”: [
+          "name": "List alert rules",
+          "event": [
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “pm.test('Returns array with created rule', () => {“,
-                  “    const rules = pm.response.json();”,
-                  “    pm.expect(rules).to.be.an('array').with.lengthOf.at.least(1);”,
-                  “    const rule = rules.find(r => r.id === pm.collectionVariables.get('alert_rule_id'));”,
-                  “    pm.expect(rule).to.not.be.undefined;”,
-                  “    pm.expect(rule.isActive).to.be.true;”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Returns array with created rule', () => {",
+                  "    const rules = pm.response.json();",
+                  "    pm.expect(rules).to.be.an('array').with.lengthOf.at.least(1);",
+                  "    const rule = rules.find(r => r.id === pm.collectionVariables.get('alert_rule_id'));",
+                  "    pm.expect(rule).to.not.be.undefined;",
+                  "    pm.expect(rule.isActive).to.be.true;",
+                  "});"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “GET”,
-            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
-            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”] }
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules"] }
           }
         },
 
         {
-          “name”: “Update alert rule â€” raise threshold”,
-          “event”: [
+          "name": "Update alert rule — raise threshold",
+          "event": [
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “pm.test('Threshold updated', () => {“,
-                  “    const r = pm.response.json();”,
-                  “    pm.expect(r.threshold).to.equal(38.0);”,
-                  “    pm.expect(r.name).to.equal('High temperature alert â€” revised');”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Threshold updated', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.threshold).to.equal(38.0);",
+                  "    pm.expect(r.name).to.equal('High temperature alert — revised');",
+                  "});"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “PUT”,
-            “header”: [
-              { “key”: “Content-Type”,  “value”: “application/json” },
-              { “key”: “Authorization”, “value”: “Bearer {{access_token}}” }
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
             ],
-            “body”: {
-              “mode”: “raw”,
-              “raw”: “{\n  \”name\”: \”High temperature alert â€” revised\”,\n  \”metricName\”: \”temperature\”,\n  \”condition\”: \”gt\”,\n  \”threshold\”: 38.0,\n  \”notificationChannels\”: [\”email\”],\n  \”suppressionWindowS\”: 600\n}”,
-              “options”: { “raw”: { “language”: “json” } }
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"High temperature alert — revised\",\n  \"metricName\": \"temperature\",\n  \"condition\": \"gt\",\n  \"threshold\": 38.0,\n  \"notificationChannels\": [\"email\"],\n  \"suppressionWindowS\": 600\n}",
+              "options": { "raw": { "language": "json" } }
             },
-            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”,”{{alert_rule_id}}”] }
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules","{{alert_rule_id}}"] }
           }
         },
 
         {
-          “name”: “Delete (deactivate) alert rule”,
-          “event”: [
+          "name": "Delete (deactivate) alert rule",
+          "event": [
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “pm.test('Response body is empty', () => {“,
-                  “    pm.expect(pm.response.text()).to.have.lengthOf(0);”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Response body is empty', () => pm.expect(pm.response.text()).to.have.lengthOf(0));"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “DELETE”,
-            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
-            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”,”{{alert_rule_id}}”] }
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","alert-rules","{{alert_rule_id}}"] }
           }
         }
       ]
     },
 
     {
-      “name”: “7 â€” Data Query (api-gateway :8080)”,
-      “description”: “Query time-series sensor data. Run after folder 4 (Ingestion) and allow a few seconds for Kafka consumption.”,
-      “item”: [
+      "name": "7 — Data Query (api-gateway :8080)",
+      "description": "Query time-series sensor data. Run after folder 4 (Ingestion) and allow a few seconds for Kafka consumption.",
+      "item": [
 
         {
-          “name”: “List available metrics”,
-          “event”: [
+          "name": "List available metrics",
+          "event": [
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “pm.test('Returns array of metric names', () => {“,
-                  “    const metrics = pm.response.json();”,
-                  “    pm.expect(metrics).to.be.an('array');”,
-                  “    if (metrics.length > 0) {“,
-                  “        pm.expect(metrics[0]).to.be.a('string');”,
-                  “        pm.collectionVariables.set('metric_name', metrics[0]);”,
-                  “        console.log('Available metrics:', metrics.join(', '));”,
-                  “    } else {“,
-                  “        console.warn('No metrics yet â€” re-run after ingest tests have been processed by Kafka');”,
-                  “    }”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Returns array of metric names', () => {",
+                  "    const metrics = pm.response.json();",
+                  "    pm.expect(metrics).to.be.an('array');",
+                  "    if (metrics.length > 0) {",
+                  "        pm.expect(metrics[0]).to.be.a('string');",
+                  "        pm.collectionVariables.set('metric_name', metrics[0]);",
+                  "        console.log('Available metrics:', metrics.join(', '));",
+                  "    } else {",
+                  "        console.warn('No metrics yet — re-run after ingest tests have been processed by Kafka');",
+                  "    }",
+                  "});"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “GET”,
-            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
-            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/data/metrics”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”data”,”metrics”] }
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data/metrics", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","data","metrics"] }
           }
         },
 
         {
-          “name”: “Query time-series data â€” last 24 hours”,
-          “event”: [
+          "name": "List available metrics — filter by device",
+          "event": [
             {
-              “listen”: “prerequest”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “const to   = new Date();”,
-                  “const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);”,
-                  “pm.variables.set('from_ts', from.toISOString());”,
-                  “pm.variables.set('to_ts',   to.toISOString());”
-                ]
-              }
-            },
-            {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “pm.test('Response has points array', () => {“,
-                  “    const r = pm.response.json();”,
-                  “    pm.expect(r).to.have.property('points');”,
-                  “    pm.expect(r.points).to.be.an('array');”,
-                  “    if (r.points.length > 0) {“,
-                  “        const p = r.points[0];”,
-                  “        pm.expect(p).to.have.property('time');”,
-                  “        pm.expect(p).to.have.property('avg_value').that.is.a('number');”,
-                  “    }”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Returns array', () => pm.expect(pm.response.json()).to.be.an('array'));"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “GET”,
-            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
-            “url”: {
-              “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}”,
-              “host”: [“{{api_gateway_url}}”],
-              “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”data”],
-              “query”: [
-                { “key”: “metric”, “value”: “{{metric_name}}” },
-                { “key”: “from”,   “value”: “{{from_ts}}” },
-                { “key”: “to”,     “value”: “{{to_ts}}” }
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data/metrics?deviceId={{device_id}}",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","data","metrics"],
+              "query": [{ "key": "deviceId", "value": "{{device_id}}" }]
+            }
+          }
+        },
+
+        {
+          "name": "Query time-series data — last 24 hours",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const to   = new Date();",
+                  "const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);",
+                  "pm.variables.set('from_ts', from.toISOString());",
+                  "pm.variables.set('to_ts',   to.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Response has points array', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r).to.have.property('points');",
+                  "    pm.expect(r.points).to.be.an('array');",
+                  "    if (r.points.length > 0) {",
+                  "        const p = r.points[0];",
+                  "        pm.expect(p).to.have.property('time');",
+                  "        pm.expect(p).to.have.property('avg_value').that.is.a('number');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","data"],
+              "query": [
+                { "key": "metric", "value": "{{metric_name}}" },
+                { "key": "from",   "value": "{{from_ts}}" },
+                { "key": "to",     "value": "{{to_ts}}" }
               ]
             }
           }
         },
 
         {
-          “name”: “Query time-series data â€” specific device”,
-          “event”: [
+          "name": "Query time-series data — specific device",
+          "event": [
             {
-              “listen”: “prerequest”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “const to   = new Date();”,
-                  “const from = new Date(to.getTime() - 6 * 60 * 60 * 1000);”,
-                  “pm.variables.set('from_ts', from.toISOString());”,
-                  “pm.variables.set('to_ts',   to.toISOString());”
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const to   = new Date();",
+                  "const from = new Date(to.getTime() - 6 * 60 * 60 * 1000);",
+                  "pm.variables.set('from_ts', from.toISOString());",
+                  "pm.variables.set('to_ts',   to.toISOString());"
                 ]
               }
             },
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “GET”,
-            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
-            “url”: {
-              “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}&deviceId={{device_id}}”,
-              “host”: [“{{api_gateway_url}}”],
-              “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”data”],
-              “query”: [
-                { “key”: “metric”,   “value”: “{{metric_name}}” },
-                { “key”: “from”,     “value”: “{{from_ts}}” },
-                { “key”: “to”,       “value”: “{{to_ts}}” },
-                { “key”: “deviceId”, “value”: “{{device_id}}” }
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}&deviceId={{device_id}}",
+              "host": ["{{api_gateway_url}}"],
+              "path": ["api","v1","projects","{{project_id}}","data"],
+              "query": [
+                { "key": "metric",   "value": "{{metric_name}}" },
+                { "key": "from",     "value": "{{from_ts}}" },
+                { "key": "to",       "value": "{{to_ts}}" },
+                { "key": "deviceId", "value": "{{device_id}}" }
               ]
             }
           }
@@ -1051,56 +987,51 @@
     },
 
     {
-      “name”: “8 â€” Admin (api-gateway :8080)”,
-      “description”: “Admin-only endpoints. Requires a user with ROLE_ADMIN. These will return 403 for regular users.”,
-      “item”: [
+      "name": "8 — Admin (api-gateway :8080)",
+      "description": "Admin-only endpoints. Requires a user with ROLE_ADMIN. These will return 403 for regular users.",
+      "item": [
 
         {
-          “name”: “Get platform stats”,
-          “event”: [
+          "name": "Get platform stats",
+          "event": [
             {
-              “listen”: “test”,
-              “script”: {
-                “type”: “text/javascript”,
-                “exec”: [
-                  “// If the test user is not ROLE_ADMIN this will return 403 â€” that is expected.”,
-                  “pm.test('Status is 200 OK or 403 Forbidden', () => {“,
-                  “    pm.expect([200, 403]).to.include(pm.response.code);”,
-                  “});”,
-                  “”,
-                  “pm.test('Response time < 500ms', () => {“,
-                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
-                  “});”,
-                  “”,
-                  “if (pm.response.code === 200) {“,
-                  “    pm.test('Stats schema is valid', () => {“,
-                  “        const r = pm.response.json();”,
-                  “        pm.expect(r).to.include.all.keys('totalUsers','totalProjects','totalDevices','totalAlertRules','messagesLast24h');”,
-                  “        pm.expect(r.totalUsers).to.be.a('number').and.at.least(0);”,
-                  “        pm.expect(r.totalProjects).to.be.a('number').and.at.least(0);”,
-                  “        pm.expect(r.messagesLast24h).to.be.a('number').and.at.least(0);”,
-                  “    });”,
-                  “}”
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK or 403 Forbidden', () => {",
+                  "    pm.expect([200, 403]).to.include(pm.response.code);",
+                  "});",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Stats schema is valid', () => {",
+                  "        const r = pm.response.json();",
+                  "        pm.expect(r).to.include.all.keys('totalUsers','totalProjects','totalDevices','totalAlertRules','messagesLast24h');",
+                  "        pm.expect(r.totalUsers).to.be.a('number').and.at.least(0);",
+                  "        pm.expect(r.totalProjects).to.be.a('number').and.at.least(0);",
+                  "        pm.expect(r.messagesLast24h).to.be.a('number').and.at.least(0);",
+                  "    });",
+                  "}"
                 ]
               }
             }
           ],
-          “request”: {
-            “method”: “GET”,
-            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
-            “url”: { “raw”: “{{api_gateway_url}}/api/v1/admin/stats”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”admin”,”stats”] }
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/admin/stats", "host": ["{{api_gateway_url}}"], "path": ["api","v1","admin","stats"] }
           }
         }
       ]
     },
 
     {
-      “name”: “9 â€” Security Tests”,
+      "name": "9 — Security Tests",
       "description": "Validates that protected resources correctly reject unauthenticated and unauthorized requests.",
       "item": [
 
         {
-          "name": "Reject â€” no Authorization header",
+          "name": "Reject — no Authorization header",
           "event": [
             {
               "listen": "test",
@@ -1110,10 +1041,7 @@
                   "pm.test('Status is 401 or 403 without auth header', () => {",
                   "    pm.expect([401, 403]).to.include(pm.response.code);",
                   "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -1126,7 +1054,7 @@
         },
 
         {
-          "name": "Reject â€” malformed Bearer token",
+          "name": "Reject — malformed Bearer token",
           "event": [
             {
               "listen": "test",
@@ -1136,10 +1064,7 @@
                   "pm.test('Status is 401 or 403 for invalid token', () => {",
                   "    pm.expect([401, 403]).to.include(pm.response.code);",
                   "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -1152,7 +1077,7 @@
         },
 
         {
-          "name": "Reject â€” expired / invalid refresh token",
+          "name": "Reject — expired / invalid refresh token",
           "event": [
             {
               "listen": "test",
@@ -1162,10 +1087,7 @@
                   "pm.test('Status is 400 or 401 for invalid refresh token', () => {",
                   "    pm.expect([400, 401]).to.include(pm.response.code);",
                   "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -1183,7 +1105,7 @@
         },
 
         {
-          "name": "Reject â€” wrong project ID (cross-tenant isolation)",
+          "name": "Reject — wrong project ID (cross-tenant isolation)",
           "event": [
             {
               "listen": "test",
@@ -1193,10 +1115,7 @@
                   "pm.test('Status is 403 Forbidden for another user\\'s project', () => {",
                   "    pm.response.to.have.status(403);",
                   "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -1209,7 +1128,7 @@
         },
 
         {
-          "name": "Reject â€” ingest with revoked API key",
+          "name": "Reject — ingest with revoked API key",
           "event": [
             {
               "listen": "test",
@@ -1219,10 +1138,7 @@
                   "pm.test('Status is 401 or 403 for revoked key', () => {",
                   "    pm.expect([401, 403]).to.include(pm.response.code);",
                   "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -1243,21 +1159,15 @@
         },
 
         {
-          "name": "Reject â€” duplicate registration (same email)",
+          "name": "Reject — duplicate registration (same email)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('Status is 400 for duplicate email', () => {",
-                  "    pm.response.to.have.status(400);",
-                  "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Status is 400 for duplicate email', () => pm.response.to.have.status(400));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Error message mentions email already registered', () => {",
                   "    const r = pm.response.json();",
                   "    pm.expect(r.detail || r.message || JSON.stringify(r)).to.match(/email|already|registered/i);",
@@ -1281,12 +1191,12 @@
     },
 
     {
-      “name”: “10 â€” EMQX Webhooks (internal â€” auth-service :8081)”,
-      "description": "These endpoints are called by EMQX on every device connect/publish. They are on the internal network; use localhost in dev.",
+      "name": "10 — EMQX Webhooks (internal — auth-service :8081)",
+      "description": "These endpoints are called by EMQX on every device connect/publish. They are on the internal Docker network; use localhost in dev.",
       "item": [
 
         {
-          "name": "Auth webhook â€” ALLOW (valid API key)",
+          "name": "Auth webhook — ALLOW (valid API key)",
           "event": [
             {
               "listen": "test",
@@ -1294,15 +1204,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Result is allow', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r).to.have.property('result');",
-                  "    pm.expect(r.result).to.equal('allow');",
+                  "    pm.expect(pm.response.json().result).to.equal('allow');",
                   "});"
                 ]
               }
@@ -1321,7 +1225,7 @@
         },
 
         {
-          "name": "Auth webhook â€” DENY (wrong API key)",
+          "name": "Auth webhook — DENY (wrong API key)",
           "event": [
             {
               "listen": "test",
@@ -1329,14 +1233,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('Result is deny for invalid key', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.result).to.equal('deny');",
+                  "    pm.expect(pm.response.json().result).to.equal('deny');",
                   "});"
                 ]
               }
@@ -1355,7 +1254,7 @@
         },
 
         {
-          "name": "ACL webhook â€” ALLOW publish on own project topic",
+          "name": "ACL webhook — ALLOW publish on own project topic",
           "event": [
             {
               "listen": "test",
@@ -1363,14 +1262,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('ACL grants publish to own project topic', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.result).to.equal('allow');",
+                  "    pm.expect(pm.response.json().result).to.equal('allow');",
                   "});"
                 ]
               }
@@ -1389,7 +1283,7 @@
         },
 
         {
-          "name": "ACL webhook â€” DENY publish to another project's topic",
+          "name": "ACL webhook — DENY publish to another project topic",
           "event": [
             {
               "listen": "test",
@@ -1397,14 +1291,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
                   "pm.test('ACL denies publish to a different project topic', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.result).to.equal('deny');",
+                  "    pm.expect(pm.response.json().result).to.equal('deny');",
                   "});"
                 ]
               }
@@ -1423,7 +1312,7 @@
         },
 
         {
-          "name": "ACL webhook â€” DENY subscribe (only server-side consumers subscribe)",
+          "name": "ACL webhook — DENY subscribe (only server-side consumers subscribe)",
           "event": [
             {
               "listen": "test",
@@ -1431,14 +1320,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
-                  "pm.test('Devices cannot subscribe â€” only server consumers can', () => {",
-                  "    const r = pm.response.json();",
-                  "    pm.expect(r.result).to.equal('deny');",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Devices cannot subscribe — only server consumers can', () => {",
+                  "    pm.expect(pm.response.json().result).to.equal('deny');",
                   "});"
                 ]
               }
@@ -1459,7 +1343,7 @@
     },
 
     {
-      “name”: “11 â€” Cleanup”,
+      "name": "11 — Cleanup",
       "description": "Revoke the API key and soft-delete the project. Run last.",
       "item": [
 
@@ -1472,14 +1356,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
-                  "pm.test('Response body is empty', () => {",
-                  "    pm.expect(pm.response.text()).to.have.lengthOf(0);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Response body is empty', () => pm.expect(pm.response.text()).to.have.lengthOf(0));"
                 ]
               }
             }
@@ -1507,10 +1385,7 @@
                   "pm.test('Status is 401 or 403 after key revocation', () => {",
                   "    pm.expect([401, 403]).to.include(pm.response.code);",
                   "});",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});"
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
                 ]
               }
             }
@@ -1539,12 +1414,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));",
-                  "",
-                  "pm.test('Response time < 500ms', () => {",
-                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
-                  "});",
-                  "",
-                  "pm.test('Clears project_id variable', () => {",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Clears collection variables', () => {",
                   "    pm.collectionVariables.set('project_id', '');",
                   "    pm.collectionVariables.set('api_key_id', '');",
                   "    pm.collectionVariables.set('api_key_full', '');",

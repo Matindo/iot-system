@@ -24,9 +24,7 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
-import { useAuthStore } from '../../store/auth.js'
-import { useProjectStore } from '../../store/project.js'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'LoginView',
@@ -41,15 +39,14 @@ export default {
   },
 
   methods: {
-    ...mapActions(useAuthStore, ['login']),
+    ...mapActions('auth', ['login']),
 
     async submit() {
       this.error = ''
       this.loading = true
       try {
-        await this.login(this.email, this.password)
-        const projectStore = useProjectStore()
-        const projects = await projectStore.fetchProjects()
+        await this.login({ email: this.email, password: this.password })
+        const projects = await this.$store.dispatch('project/fetchProjects')
         this.$router.push(projects.length === 0 ? '/onboarding' : '/dashboard')
       } catch (e) {
         this.error = e.response?.data?.message || 'Invalid email or password'

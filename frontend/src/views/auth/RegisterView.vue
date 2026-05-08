@@ -24,8 +24,7 @@
 </template>
 
 <script>
-import { mapActions } from 'pinia'
-import { useAuthStore } from '../../store/auth.js'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'RegisterView',
@@ -40,13 +39,13 @@ export default {
   },
 
   methods: {
-    ...mapActions(useAuthStore, ['register']),
+    ...mapActions('auth', ['register']),
 
     async submit() {
       this.error = ''
       this.loading = true
       try {
-        await this.register(this.email, this.password)
+        await this.register({ email: this.email, password: this.password })
         this.$router.push('/onboarding')
       } catch (e) {
         this.error = e.response?.data?.message || 'Registration failed. Try a different email.'

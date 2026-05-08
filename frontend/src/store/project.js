@@ -1,47 +1,56 @@
-import { defineStore } from 'pinia'
 import api from '../api/client.js'
 
-export const useProjectStore = defineStore('project', {
+export default {
+  namespaced: true,
+
   state: () => ({
     projects: [],
     current: null,
   }),
 
-  actions: {
-    async fetchProjects() {
-      const { data } = await api.get('/api/v1/projects')
-      this.projects = data
-      if (!this.current && data.length > 0) {
-        this.current = data[0]
-      }
-      return data
+  mutations: {
+    SET_PROJECTS(state, projects) { state.projects = projects },
+    SET_CURRENT(state, project) { state.current = project },
+    ADD_PROJECT(state, project) { state.projects.push(project) },
+    UPDATE_PROJECT(state, updated) {
+      const idx = state.projects.findIndex((p) => p.id === updated.id)
+      if (idx !== -1) state.projects.splice(idx, 1, updated)
+      if (state.current?.id === updated.id) state.current = updated
     },
-
-    select(project) {
-      this.current = project
-    },
-
-    async createProject(payload) {
-      const { data } = await api.post('/api/v1/projects', payload)
-      this.projects.push(data)
-      this.current = data
-      return data
-    },
-
-    async updateProject(id, payload) {
-      const { data } = await api.put(`/api/v1/projects/${id}`, payload)
-      const idx = this.projects.findIndex((p) => p.id === id)
-      if (idx !== -1) this.projects[idx] = data
-      if (this.current?.id === id) this.current = data
-      return data
-    },
-
-    async deleteProject(id) {
-      await api.delete(`/api/v1/projects/${id}`)
-      this.projects = this.projects.filter((p) => p.id !== id)
-      if (this.current?.id === id) {
-        this.current = this.projects[0] || null
-      }
+    REMOVE_PROJECT(state, id) {
+      state.projects = state.projects.filter((p) => p.id !== id)
+      if (state.current?.id === id) state.current = state.projects[0] || null
     },
   },
-})
+
+  actions: {
+    async fetchProjects({ commit, state }) {
+      const { data } = await api.get('/api/v1/projects')
+      commit('SET_PROJECTS', data)
+      if (!state.current && data.length > 0) commit('SET_CURRENT', data[0])
+      return data
+    },
+
+    select({ commit }, project) {
+      commit('SET_CURRENT', project)
+    },
+
+    async createProject({ commit }, payload) {
+      const { data } = await api.post('/api/v1/projects', payload)
+      commit('ADD_PROJECT', data)
+      commit('SET_CURRENT', data)
+      return data
+    },
+
+    async updateProject({ commit }, { id, payload }) {
+      const { data } = await api.put(`/api/v1/projects/${id}`, payload)
+      commit('UPDATE_PROJECT', data)
+      return data
+    },
+
+    async deleteProject({ commit }, id) {
+      await api.delete(`/api/v1/projects/${id}`)
+      commit('REMOVE_PROJECT', id)
+    },
+  },
+}
