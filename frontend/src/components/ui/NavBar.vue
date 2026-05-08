@@ -1,48 +1,55 @@
 <template>
   <nav class="navbar">
     <div class="nav-left">
-      <span class="brand">Afridata</span>
-      <select v-if="projectStore.projects.length" class="project-select"
-              :value="projectStore.current?.id"
-              @change="selectProject">
-        <option v-for="p in projectStore.projects" :key="p.id" :value="p.id">
-          {{ p.name }}
-        </option>
+      <span class="brand">IoTeca</span>
+      <select v-if="projects.length" class="project-select"
+              :value="current && current.id"
+              @change="onProjectChange">
+        <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
       </select>
     </div>
 
     <div class="nav-links">
       <router-link to="/dashboard">Dashboard</router-link>
-      <router-link v-if="projectStore.current" :to="`/projects/${projectStore.current.id}`">
-        Settings
-      </router-link>
-      <router-link v-if="auth.isAdmin" to="/admin">Admin</router-link>
+      <router-link v-if="current" :to="'/projects/' + current.id">Settings</router-link>
+      <router-link v-if="isAdmin" to="/admin">Admin</router-link>
     </div>
 
     <div class="nav-right">
-      <span class="user-email">{{ auth.user?.email }}</span>
+      <span class="user-email">{{ user && user.email }}</span>
       <button class="logout-btn" @click="handleLogout">Logout</button>
     </div>
   </nav>
 </template>
 
-<script setup>
+<script>
+import { mapState, mapActions } from 'pinia'
 import { useAuthStore } from '../../store/auth.js'
 import { useProjectStore } from '../../store/project.js'
-import { useRouter } from 'vue-router'
 
-const auth = useAuthStore()
-const projectStore = useProjectStore()
-const router = useRouter()
+export default {
+  name: 'NavBar',
 
-function selectProject(e) {
-  const project = projectStore.projects.find(p => p.id === e.target.value)
-  if (project) projectStore.select(project)
-}
+  computed: {
+    ...mapState(useAuthStore, ['user', 'isAdmin']),
+    ...mapState(useProjectStore, ['projects', 'current']),
+  },
 
-function handleLogout() {
-  auth.logout()
-  router.push('/login')
+  methods: {
+    ...mapActions(useAuthStore, ['logout']),
+    ...mapActions(useProjectStore, ['select']),
+
+    onProjectChange(e) {
+      const projectStore = useProjectStore()
+      const project = projectStore.projects.find((p) => p.id === e.target.value)
+      if (project) this.select(project)
+    },
+
+    handleLogout() {
+      this.logout()
+      this.$router.push('/login')
+    },
+  },
 }
 </script>
 
@@ -80,7 +87,8 @@ function handleLogout() {
   font-size: 0.875rem;
   transition: all 0.15s;
 }
-.nav-links a:hover, .nav-links a.router-link-active { color: white; background: rgba(255,255,255,0.1); }
+.nav-links a:hover,
+.nav-links a.router-link-active { color: white; background: rgba(255,255,255,0.1); }
 .nav-right { display: flex; align-items: center; gap: 12px; }
 .user-email { color: #888; font-size: 0.8rem; }
 .logout-btn {

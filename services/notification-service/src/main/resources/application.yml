@@ -1,12 +1,12 @@
-server:
+﻿server:
   port: 8085
 
 spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:afridata}
-    username: ${DB_USER:afridata_app}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:IoTeca}
+    username: ${DB_USER:IoTeca_app}
     password: ${DB_PASSWORD:changeme}
     hikari:
       maximum-pool-size: 5
@@ -21,7 +21,7 @@ spring:
   mail:
     host: ${SMTP_HOST:smtp.example.com}
     port: ${SMTP_PORT:587}
-    username: ${SMTP_USER:noreply@afridata.io}
+    username: ${SMTP_USER:noreply@ioteca.io}
     password: ${SMTP_PASSWORD:changeme}
     properties:
       mail:
@@ -38,8 +38,8 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 platform:
-  base-url: ${PLATFORM_BASE_URL:https://afridata.io}
-  from-email: ${SMTP_USER:noreply@afridata.io}
+  base-url: ${PLATFORM_BASE_URL:https://ioteca.io}
+  from-email: ${SMTP_USER:noreply@ioteca.io}
 
 management:
   endpoints:
@@ -49,4 +49,4 @@ management:
 
 logging:
   level:
-    io.afridata: INFO
+    io.ioteca: INFO

@@ -1,0 +1,1228 @@
+﻿{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "IoTeca IoT Platform â€” API Tests",
+    "description": "Complete API test suite covering authentication, project management, data ingestion, device management, and EMQX webhooks.\n\n**Run order:** Execute folders top-to-bottom. Variables are set automatically by test scripts.\n\n**Timeliness:** Every request asserts response time < 500 ms.\n\n**Auth:** Folder 1 (Auth) sets `access_token` and `refresh_token`. Folder 3 (API Keys) sets `api_key_full`. Ingest requests use the API key; all other protected requests use the JWT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    { "key": "auth_service_url", "value": "http://localhost:8081", "type": "string" },
+    { "key": "api_gateway_url",  "value": "http://localhost:8080", "type": "string" },
+    { "key": "test_email",       "value": "", "type": "string" },
+    { "key": "test_password",    "value": "TestPassword123!", "type": "string" },
+    { "key": "access_token",     "value": "", "type": "string" },
+    { "key": "refresh_token",    "value": "", "type": "string" },
+    { "key": "user_id",          "value": "", "type": "string" },
+    { "key": "project_id",       "value": "", "type": "string" },
+    { "key": "api_key_id",       "value": "", "type": "string" },
+    { "key": "api_key_full",     "value": "", "type": "string" },
+    { "key": "device_id",        "value": "sensor_ke_001", "type": "string" }
+  ],
+
+  "item": [
+
+    {
+      "name": "1 â€” Authentication (auth-service :8081)",
+      "item": [
+
+        {
+          "name": "Register new user",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const ts = Date.now();",
+                  "pm.collectionVariables.set('test_email', `iot_tester_${ts}@ioteca.io`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Auth response schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r).to.have.all.keys('accessToken','refreshToken','tokenType','expiresIn','userId','email','role');",
+                  "    pm.expect(r.tokenType).to.equal('Bearer');",
+                  "    pm.expect(r.accessToken).to.be.a('string').with.lengthOf.above(20);",
+                  "    pm.expect(r.refreshToken).to.be.a('string').with.lengthOf.above(20);",
+                  "    pm.expect(r.expiresIn).to.be.a('number').and.above(0);",
+                  "    pm.expect(r.userId).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(r.email).to.equal(pm.collectionVariables.get('test_email'));",
+                  "    pm.expect(r.role).to.equal('USER');",
+                  "});",
+                  "",
+                  "pm.test('Sets auth tokens in collection variables', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token',  r.accessToken);",
+                  "    pm.collectionVariables.set('refresh_token', r.refreshToken);",
+                  "    pm.collectionVariables.set('user_id',       r.userId);",
+                  "    pm.expect(pm.collectionVariables.get('access_token')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"fullName\": \"IoT Tester\",\n  \"country\": \"KE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/v1/auth/register", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","register"] }
+          }
+        },
+
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Auth response schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.accessToken).to.be.a('string').with.lengthOf.above(20);",
+                  "    pm.expect(r.refreshToken).to.be.a('string').with.lengthOf.above(20);",
+                  "    pm.expect(r.tokenType).to.equal('Bearer');",
+                  "    pm.expect(r.expiresIn).to.be.a('number').and.above(0);",
+                  "    pm.expect(r.role).to.equal('USER');",
+                  "});",
+                  "",
+                  "pm.test('Refreshes tokens in collection variables', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.collectionVariables.set('access_token',  r.accessToken);",
+                  "    pm.collectionVariables.set('refresh_token', r.refreshToken);",
+                  "    pm.collectionVariables.set('user_id',       r.userId);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/v1/auth/login", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","login"] }
+          }
+        },
+
+        {
+          "name": "Get current user (/me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('User profile schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r).to.include.all.keys('id','email','role','emailVerified','createdAt');",
+                  "    pm.expect(r.id).to.equal(pm.collectionVariables.get('user_id'));",
+                  "    pm.expect(r.email).to.equal(pm.collectionVariables.get('test_email'));",
+                  "    pm.expect(r.role).to.equal('USER');",
+                  "    pm.expect(r.emailVerified).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{auth_service_url}}/api/v1/auth/me", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","me"] }
+          }
+        },
+
+        {
+          "name": "Refresh access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Returns new access token', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.accessToken).to.be.a('string').with.lengthOf.above(20);",
+                  "    pm.expect(r.tokenType).to.equal('Bearer');",
+                  "    // Update the stored token so subsequent requests stay valid",
+                  "    pm.collectionVariables.set('access_token', r.accessToken);",
+                  "});",
+                  "",
+                  "pm.test('Reject â€” invalid refresh token returns 401', () => {",
+                  "    // Note: this assertion is on the current (valid) response.",
+                  "    // The separate 'Security Tests' folder covers the 401 case.",
+                  "    pm.expect(pm.response.code).to.not.equal(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/v1/auth/refresh", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","refresh"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "2 â€” Projects (api-gateway :8080)",
+      "item": [
+
+        {
+          "name": "Create project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Project schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(r.name).to.equal('Nairobi Greenhouse Monitor');",
+                  "    pm.expect(r.region).to.equal('af-ke-1');",
+                  "    pm.expect(r.environment).to.equal('production');",
+                  "    pm.expect(r.isActive).to.be.true;",
+                  "    pm.expect(r.createdAt).to.be.a('string');",
+                  "});",
+                  "",
+                  "pm.test('Sets project_id variable', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.collectionVariables.set('project_id', r.id);",
+                  "    pm.expect(pm.collectionVariables.get('project_id')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nairobi Greenhouse Monitor\",\n  \"description\": \"Monitors temperature, humidity, and soil moisture across greenhouse sections\",\n  \"environment\": \"production\",\n  \"region\": \"af-ke-1\",\n  \"timezone\": \"Africa/Nairobi\",\n  \"expectedDeviceCount\": 10,\n  \"declaredSendIntervalS\": 30,\n  \"dataFormat\": \"json\",\n  \"alertEmail\": \"alerts@greenhouse.co.ke\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+          }
+        },
+
+        {
+          "name": "List projects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Returns array containing newly created project', () => {",
+                  "    const projects = pm.response.json();",
+                  "    pm.expect(projects).to.be.an('array').with.lengthOf.at.least(1);",
+                  "    const project = projects.find(p => p.id === pm.collectionVariables.get('project_id'));",
+                  "    pm.expect(project).to.not.be.undefined;",
+                  "    pm.expect(project.isActive).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+          }
+        },
+
+        {
+          "name": "Get project by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Project ID matches requested ID', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.id).to.equal(pm.collectionVariables.get('project_id'));",
+                  "    pm.expect(r.userId).to.equal(pm.collectionVariables.get('user_id'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
+          }
+        },
+
+        {
+          "name": "Update project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Updated fields are reflected', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.description).to.include('v2');",
+                  "    pm.expect(r.alertEmail).to.equal('ops@greenhouse.co.ke');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nairobi Greenhouse Monitor\",\n  \"description\": \"Updated description v2 â€” added soil moisture sensors\",\n  \"alertEmail\": \"ops@greenhouse.co.ke\",\n  \"alertWebhookUrl\": \"https://hooks.greenhouse.co.ke/alerts\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "3 â€” API Keys (auth-service :8081)",
+      "item": [
+
+        {
+          "name": "Create API key for project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('API key creation response schema', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));",
+                  "    pm.expect(r.fullKey).to.be.a('string').and.match(/^IoTeca_live_[a-z0-9]{8}_[A-Za-z0-9_-]+$/);",
+                  "    pm.expect(r.keyPrefix).to.have.lengthOf.at.most(20);",
+                  "    pm.expect(r.environment).to.equal('live');",
+                  "    pm.expect(r.scopes).to.include('ingest');",
+                  "});",
+                  "",
+                  "pm.test('fullKey starts with platform prefix', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.fullKey).to.startWith('ioteca_');",
+                  "});",
+                  "",
+                  "pm.test('Stores key in collection variables (shown once only)', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.collectionVariables.set('api_key_id',   r.id);",
+                  "    pm.collectionVariables.set('api_key_full', r.fullKey);",
+                  "    pm.expect(pm.collectionVariables.get('api_key_full')).to.startWith('ioteca_');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": \"{{project_id}}\",\n  \"name\": \"Main sensor cluster\",\n  \"environment\": \"live\",\n  \"scopes\": [\"ingest\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/v1/keys", "host": ["{{auth_service_url}}"], "path": ["api","v1","keys"] }
+          }
+        },
+
+        {
+          "name": "List API keys for project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Returns array with created key', () => {",
+                  "    const keys = pm.response.json();",
+                  "    pm.expect(keys).to.be.an('array').with.lengthOf.at.least(1);",
+                  "    const key = keys.find(k => k.id === pm.collectionVariables.get('api_key_id'));",
+                  "    pm.expect(key).to.not.be.undefined;",
+                  "    pm.expect(key.isActive).to.be.true;",
+                  "    // fullKey must NOT appear in list response â€” shown once only at creation",
+                  "    pm.expect(key.fullKey).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{auth_service_url}}/api/v1/keys?projectId={{project_id}}",
+              "host": ["{{auth_service_url}}"],
+              "path": ["api","v1","keys"],
+              "query": [{ "key": "projectId", "value": "{{project_id}}" }]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "4 â€” Data Ingestion (api-gateway :8080)",
+      "description": "These requests use the API key (not a JWT) â€” simulating actual device behaviour.",
+      "item": [
+
+        {
+          "name": "Single ingest â€” temperature + humidity reading",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Response body is empty (fire-and-forget)', () => {",
+                  "    pm.expect(pm.response.text()).to.have.lengthOf(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{api_key_full}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"timestamp\": {{$timestamp}}000,\n  \"metrics\": {\n    \"temperature\": 26.4,\n    \"humidity\": 71.3,\n    \"battery_v\": 3.85,\n    \"soil_moisture\": 42.1\n  },\n  \"tags\": {\n    \"location\": \"greenhouse_north\",\n    \"section\": \"A3\",\n    \"firmware\": \"v1.2.3\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+          }
+        },
+
+        {
+          "name": "Single ingest â€” anomaly reading (triggers alert rule if configured)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{api_key_full}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"{{device_id}}\",\n  \"metrics\": {\n    \"temperature\": 41.2,\n    \"humidity\": 98.5\n  },\n  \"tags\": { \"location\": \"greenhouse_north\", \"note\": \"anomaly_test\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+          }
+        },
+
+        {
+          "name": "Batch ingest â€” 3 devices, multiple metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Batch response schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r).to.have.all.keys('accepted','total');",
+                  "    pm.expect(r.total).to.equal(3);",
+                  "    pm.expect(r.accepted).to.be.a('number').and.at.most(3);",
+                  "});",
+                  "",
+                  "pm.test('All 3 messages were accepted', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.accepted).to.equal(3);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{api_key_full}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"device_id\": \"sensor_ke_001\",\n    \"timestamp\": {{$timestamp}}000,\n    \"metrics\": { \"temperature\": 24.5, \"humidity\": 63.2, \"battery_v\": 3.7 },\n    \"tags\": { \"location\": \"section_A\", \"firmware\": \"v1.2.3\" }\n  },\n  {\n    \"device_id\": \"sensor_ke_002\",\n    \"timestamp\": {{$timestamp}}000,\n    \"metrics\": { \"temperature\": 25.1, \"humidity\": 68.0, \"soil_moisture\": 38.5 },\n    \"tags\": { \"location\": \"section_B\", \"firmware\": \"v1.2.3\" }\n  },\n  {\n    \"device_id\": \"sensor_ke_003\",\n    \"timestamp\": {{$timestamp}}000,\n    \"metrics\": { \"temperature\": 23.8, \"humidity\": 71.5, \"lux\": 1240.0 },\n    \"tags\": { \"location\": \"section_C\", \"firmware\": \"v1.3.0\" }\n  }\n]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest/batch", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest","batch"] }
+          }
+        },
+
+        {
+          "name": "Batch ingest â€” reject oversized batch (101 items)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Build a 101-item array to verify the 400 rejection",
+                  "const batch = Array.from({length: 101}, (_, i) => ({",
+                  "    device_id: `flood_sensor_${i}`,",
+                  "    metrics: { value: Math.random() * 100 }",
+                  "}));",
+                  "pm.variables.set('oversized_batch', JSON.stringify(batch));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 Bad Request for oversized batch', () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Error message mentions batch size limit', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.error).to.include('100');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{api_key_full}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{{oversized_batch}}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest/batch", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest","batch"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "5 â€” Devices (api-gateway :8080)",
+      "description": "Devices are auto-registered on first ingest. Allow a few seconds after the ingest tests for Kafka consumption and TimescaleDB writes to complete.",
+      "item": [
+
+        {
+          "name": "List devices for project",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', () => {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Ingested device appears (async â€” may be empty if Kafka not yet consumed)', () => {",
+                  "    const devices = pm.response.json();",
+                  "    // Not a hard failure â€” Kafka ingestion is async.",
+                  "    if (devices.length > 0) {",
+                  "        const device = devices[0];",
+                  "        pm.expect(device.projectId).to.equal(pm.collectionVariables.get('project_id'));",
+                  "        pm.expect(device.deviceId).to.be.a('string').and.not.empty;",
+                  "        pm.expect(device.isActive).to.be.true;",
+                  "        // Store first device_id for follow-up tests",
+                  "        pm.collectionVariables.set('device_id', device.deviceId);",
+                  "    } else {",
+                  "        console.warn('No devices yet â€” re-run after Kafka consumers have processed the ingest messages');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices"] }
+          }
+        },
+
+        {
+          "name": "Get single device",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Device schema is valid', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
+                  "    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));",
+                  "    pm.expect(r.deviceId).to.equal(pm.collectionVariables.get('device_id'));",
+                  "    pm.expect(r.isActive).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
+          }
+        },
+
+        {
+          "name": "Update device metadata",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Updated fields are reflected', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.name).to.equal('Greenhouse North A3');",
+                  "    pm.expect(r.locationLabel).to.equal('Section A â€” Row 3');",
+                  "    pm.expect(r.latitude).to.be.closeTo(-1.2921, 0.001);",
+                  "    pm.expect(r.longitude).to.be.closeTo(36.8219, 0.001);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Greenhouse North A3\",\n  \"locationLabel\": \"Section A â€” Row 3\",\n  \"latitude\": -1.2921,\n  \"longitude\": 36.8219,\n  \"tags\": { \"zone\": \"north\", \"crop\": \"tomatoes\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}/devices/{{device_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}","devices","{{device_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "6 â€” Security Tests",
+      "description": "Validates that protected resources correctly reject unauthenticated and unauthorized requests.",
+      "item": [
+
+        {
+          "name": "Reject â€” no Authorization header",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or 403 without auth header', () => {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+          }
+        },
+
+        {
+          "name": "Reject â€” malformed Bearer token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or 403 for invalid token', () => {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer this.is.not.a.valid.jwt" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects"] }
+          }
+        },
+
+        {
+          "name": "Reject â€” expired / invalid refresh token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 or 401 for invalid refresh token', () => {",
+                  "    pm.expect([400, 401]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmYWtlLXVzZXIiLCJ0eXBlIjoicmVmcmVzaCIsImV4cCI6MX0.invalidsig\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/v1/auth/refresh", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","refresh"] }
+          }
+        },
+
+        {
+          "name": "Reject â€” wrong project ID (cross-tenant isolation)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 403 Forbidden for another user\\'s project', () => {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/00000000-0000-0000-0000-000000000001", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","00000000-0000-0000-0000-000000000001"] }
+          }
+        },
+
+        {
+          "name": "Reject â€” ingest with revoked API key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or 403 for revoked key', () => {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer IoTeca_live_00000000_fakekeythatdoesnotexist" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device_id\": \"hacker_device\",\n  \"metrics\": { \"temperature\": 99.9 }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+          }
+        },
+
+        {
+          "name": "Reject â€” duplicate registration (same email)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 for duplicate email', () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Error message mentions email already registered', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.detail || r.message || JSON.stringify(r)).to.match(/email|already|registered/i);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"AnotherPassword99!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/v1/auth/register", "host": ["{{auth_service_url}}"], "path": ["api","v1","auth","register"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "7 â€” EMQX Webhooks (internal â€” auth-service :8081)",
+      "description": "These endpoints are called by EMQX on every device connect/publish. They are on the internal network; use localhost in dev.",
+      "item": [
+
+        {
+          "name": "Auth webhook â€” ALLOW (valid API key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Result is allow', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r).to.have.property('result');",
+                  "    pm.expect(r.result).to.equal('allow');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"password\": \"{{api_key_full}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"peerhost\": \"196.201.214.5\",\n  \"proto_name\": \"MQTT\",\n  \"mountpoint\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/auth", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","auth"] }
+          }
+        },
+
+        {
+          "name": "Auth webhook â€” DENY (wrong API key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Result is deny for invalid key', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.result).to.equal('deny');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"password\": \"IoTeca_live_badbadbad_thiskeyiscompletelyfake\",\n  \"clientid\": \"evil_device\",\n  \"peerhost\": \"1.2.3.4\",\n  \"proto_name\": \"MQTT\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/auth", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","auth"] }
+          }
+        },
+
+        {
+          "name": "ACL webhook â€” ALLOW publish on own project topic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('ACL grants publish to own project topic', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.result).to.equal('allow');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"IoTeca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
+          }
+        },
+
+        {
+          "name": "ACL webhook â€” DENY publish to another project's topic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('ACL denies publish to a different project topic', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.result).to.equal('deny');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"IoTeca/00000000-0000-0000-0000-999999999999/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
+          }
+        },
+
+        {
+          "name": "ACL webhook â€” DENY subscribe (only server-side consumers subscribe)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Devices cannot subscribe â€” only server consumers can', () => {",
+                  "    const r = pm.response.json();",
+                  "    pm.expect(r.result).to.equal('deny');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"IoTeca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"subscribe\",\n  \"peerhost\": \"196.201.214.5\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "8 â€” Cleanup",
+      "description": "Revoke the API key and soft-delete the project. Run last.",
+      "item": [
+
+        {
+          "name": "Revoke API key",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Response body is empty', () => {",
+                  "    pm.expect(pm.response.text()).to.have.lengthOf(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{auth_service_url}}/api/v1/keys/{{api_key_id}}?reason=Test+cleanup",
+              "host": ["{{auth_service_url}}"],
+              "path": ["api","v1","keys","{{api_key_id}}"],
+              "query": [{ "key": "reason", "value": "Test cleanup" }]
+            }
+          }
+        },
+
+        {
+          "name": "Verify API key is no longer valid (ingest rejected)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 or 403 after key revocation', () => {",
+                  "    pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{api_key_full}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"device_id\": \"post_revoke\", \"metrics\": { \"test\": 1 } }",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{api_gateway_url}}/api/v1/ingest", "host": ["{{api_gateway_url}}"], "path": ["api","v1","ingest"] }
+          }
+        },
+
+        {
+          "name": "Delete project (soft-delete)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));",
+                  "",
+                  "pm.test('Response time < 500ms', () => {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "pm.test('Clears project_id variable', () => {",
+                  "    pm.collectionVariables.set('project_id', '');",
+                  "    pm.collectionVariables.set('api_key_id', '');",
+                  "    pm.collectionVariables.set('api_key_full', '');",
+                  "    pm.expect(pm.collectionVariables.get('project_id')).to.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": { "raw": "{{api_gateway_url}}/api/v1/projects/{{project_id}}", "host": ["{{api_gateway_url}}"], "path": ["api","v1","projects","{{project_id}}"] }
+          }
+        }
+      ]
+    }
+
+  ]
+}

@@ -26,7 +26,7 @@
           <div class="field">
             <label>Region</label>
             <select v-model="form.region">
-              <option value="af-ke-1">Africa — Nairobi (af-ke-1)</option>
+              <option value="af-ke-1">Africa - Nairobi (af-ke-1)</option>
             </select>
           </div>
         </div>
@@ -44,48 +44,55 @@
           <label>Alert email</label>
           <input v-model="form.alertEmail" type="email" placeholder="alerts@yourdomain.com" />
         </div>
-
         <p v-if="error" class="error">{{ error }}</p>
         <button type="submit" :disabled="loading">
-          {{ loading ? 'Creating…' : 'Create project & continue' }}
+          {{ loading ? 'Creating...' : 'Create project & continue' }}
         </button>
       </form>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script>
+import { mapActions } from 'pinia'
 import { useProjectStore } from '../../store/project.js'
 
-const projectStore = useProjectStore()
-const router = useRouter()
+export default {
+  name: 'OnboardingView',
 
-const error = ref('')
-const loading = ref(false)
-const form = ref({
-  name: '',
-  description: '',
-  environment: 'production',
-  region: 'af-ke-1',
-  timezone: 'Africa/Nairobi',
-  expectedDeviceCount: 1,
-  declaredSendIntervalS: null,
-  alertEmail: '',
-})
+  data() {
+    return {
+      error: '',
+      loading: false,
+      form: {
+        name: '',
+        description: '',
+        environment: 'production',
+        region: 'af-ke-1',
+        timezone: 'Africa/Nairobi',
+        expectedDeviceCount: 1,
+        declaredSendIntervalS: null,
+        alertEmail: '',
+      },
+    }
+  },
 
-async function submit() {
-  error.value = ''
-  loading.value = true
-  try {
-    await projectStore.createProject(form.value)
-    router.push('/dashboard')
-  } catch (e) {
-    error.value = e.response?.data?.message || 'Failed to create project'
-  } finally {
-    loading.value = false
-  }
+  methods: {
+    ...mapActions(useProjectStore, ['createProject']),
+
+    async submit() {
+      this.error = ''
+      this.loading = true
+      try {
+        await this.createProject(this.form)
+        this.$router.push('/dashboard')
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Failed to create project'
+      } finally {
+        this.loading = false
+      }
+    },
+  },
 }
 </script>
 

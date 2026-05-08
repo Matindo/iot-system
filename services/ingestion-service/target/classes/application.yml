@@ -1,12 +1,12 @@
-server:
+﻿server:
   port: 8082
 
 spring:
   application:
     name: ingestion-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:afridata}
-    username: ${DB_USER:afridata_app}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:IoTeca}
+    username: ${DB_USER:IoTeca_app}
     password: ${DB_PASSWORD:changeme}
     hikari:
       maximum-pool-size: 20
@@ -21,7 +21,7 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
-      group-id: ${KAFKA_CONSUMER_GROUP_ID:afridata-services}
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:ioteca-services}
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -40,4 +40,4 @@ management:
 
 logging:
   level:
-    io.afridata: INFO
+    io.ioteca: INFO

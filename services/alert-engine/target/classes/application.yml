@@ -1,12 +1,12 @@
-server:
+﻿server:
   port: 8083
 
 spring:
   application:
     name: alert-engine
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:afridata}
-    username: ${DB_USER:afridata_app}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:IoTeca}
+    username: ${DB_USER:IoTeca_app}
     password: ${DB_PASSWORD:changeme}
     hikari:
       maximum-pool-size: 10
@@ -37,4 +37,4 @@ management:
 
 logging:
   level:
-    io.afridata: INFO
+    io.ioteca: INFO

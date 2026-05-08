@@ -2,8 +2,8 @@
   <div class="auth-page">
     <div class="auth-card">
       <div class="brand">
-        <span class="logo">▲</span>
-        <span>Afridata IoT Cloud</span>
+        <span class="logo">&#9650;</span>
+        <span>IoTeca</span>
       </div>
       <h2>Create your account</h2>
       <form @submit.prevent="submit">
@@ -16,39 +16,45 @@
           <input v-model="password" type="password" placeholder="Min 8 characters" required minlength="8" autocomplete="new-password" />
         </div>
         <p v-if="error" class="error">{{ error }}</p>
-        <button type="submit" :disabled="loading">
-          {{ loading ? 'Creating account…' : 'Create account' }}
-        </button>
+        <button type="submit" :disabled="loading">{{ loading ? 'Creating account...' : 'Create account' }}</button>
       </form>
       <p class="switch">Have an account? <router-link to="/login">Sign in</router-link></p>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script>
+import { mapActions } from 'pinia'
 import { useAuthStore } from '../../store/auth.js'
 
-const auth = useAuthStore()
-const router = useRouter()
+export default {
+  name: 'RegisterView',
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const loading = ref(false)
+  data() {
+    return {
+      email: '',
+      password: '',
+      error: '',
+      loading: false,
+    }
+  },
 
-async function submit() {
-  error.value = ''
-  loading.value = true
-  try {
-    await auth.register(email.value, password.value)
-    router.push('/onboarding')
-  } catch (e) {
-    error.value = e.response?.data?.message || 'Registration failed. Try a different email.'
-  } finally {
-    loading.value = false
-  }
+  methods: {
+    ...mapActions(useAuthStore, ['register']),
+
+    async submit() {
+      this.error = ''
+      this.loading = true
+      try {
+        await this.register(this.email, this.password)
+        this.$router.push('/onboarding')
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Registration failed. Try a different email.'
+      } finally {
+        this.loading = false
+      }
+    },
+  },
 }
 </script>
 
@@ -74,7 +80,7 @@ async function submit() {
   gap: 8px;
   color: #1a73e8;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-bottom: 24px;
 }
 .logo { font-size: 1.4rem; }

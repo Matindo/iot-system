@@ -1,5 +1,5 @@
-"""
-Simulate N devices sending MQTT messages to the Afridata broker.
+﻿"""
+Simulate N devices sending MQTT messages to the IoTeca broker.
 Usage:
   pip install paho-mqtt faker
   python scripts/load-test.py --devices 50 --interval 2 \
@@ -23,7 +23,7 @@ def device_loop(device_id: str, project_id: str, api_key: str,
     client.username_pw_set(username=project_id, password=api_key)
     client.connect(broker, port)
     client.loop_start()
-    topic = f"afridata/{project_id}/{device_id}/environment"
+    topic = f"IoTeca/{project_id}/{device_id}/environment"
 
     while True:
         payload = {

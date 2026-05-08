@@ -2,75 +2,81 @@
   <div ref="mapEl" class="map-container"></div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+<script>
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Fix default icon paths broken by Vite bundling
 delete L.Icon.Default.prototype._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: new URL('leaflet/dist/images/marker-icon-2x.png', import.meta.url).href,
-  iconUrl: new URL('leaflet/dist/images/marker-icon.png', import.meta.url).href,
-  shadowUrl: new URL('leaflet/dist/images/marker-shadow.png', import.meta.url).href,
+  iconUrl:       new URL('leaflet/dist/images/marker-icon.png',    import.meta.url).href,
+  shadowUrl:     new URL('leaflet/dist/images/marker-shadow.png',  import.meta.url).href,
 })
 
-const props = defineProps({
-  devices: { type: Array, default: () => [] },
-  center: { type: Array, default: () => [-1.2921, 36.8219] },
-})
+export default {
+  name: 'DeviceMap',
 
-const mapEl = ref(null)
-let map = null
-let markerLayer = null
+  props: {
+    devices: { type: Array,  default: () => [] },
+    center:  { type: Array,  default: () => [-1.2921, 36.8219] },
+  },
 
-function addMarkers() {
-  markerLayer?.clearLayers()
-  if (!markerLayer) return
+  data() {
+    return {
+      map: null,
+      markerLayer: null,
+    }
+  },
 
-  const withCoords = props.devices.filter(d => d.latitude && d.longitude)
+  watch: {
+    devices: { handler: 'addMarkers', deep: true },
+  },
 
-  withCoords.forEach(device => {
-    const lastSeen = device.lastSeenAt
-      ? new Date(device.lastSeenAt).toLocaleString()
-      : 'Never'
+  mounted() {
+    this.map = L.map(this.$refs.mapEl, { center: this.center, zoom: 7 })
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(this.map)
+    this.markerLayer = L.layerGroup().addTo(this.map)
+    this.addMarkers()
+  },
 
-    const popup = `
-      <div style="font-size:13px;min-width:160px">
-        <b>${device.name || device.deviceId}</b><br/>
-        <span style="color:#666">ID: ${device.deviceId}</span><br/>
-        <span style="color:#666">Last seen: ${lastSeen}</span>
-        ${device.locationLabel ? `<br/><span style="color:#888">${device.locationLabel}</span>` : ''}
-      </div>`
+  beforeUnmount() {
+    this.map && this.map.remove()
+  },
 
-    L.marker([device.latitude, device.longitude])
-      .bindPopup(popup)
-      .addTo(markerLayer)
-  })
+  methods: {
+    addMarkers() {
+      if (!this.markerLayer) return
+      this.markerLayer.clearLayers()
 
-  if (withCoords.length > 0 && map) {
-    const bounds = L.latLngBounds(withCoords.map(d => [d.latitude, d.longitude]))
-    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 })
-  }
+      const withCoords = this.devices.filter((d) => d.latitude && d.longitude)
+      withCoords.forEach((device) => {
+        const lastSeen = device.lastSeenAt
+          ? new Date(device.lastSeenAt).toLocaleString()
+          : 'Never'
+
+        const popup = `
+          <div style="font-size:13px;min-width:160px">
+            <b>${device.name || device.deviceId}</b><br/>
+            <span style="color:#666">ID: ${device.deviceId}</span><br/>
+            <span style="color:#666">Last seen: ${lastSeen}</span>
+            ${device.locationLabel ? `<br/><span style="color:#888">${device.locationLabel}</span>` : ''}
+          </div>`
+
+        L.marker([device.latitude, device.longitude])
+          .bindPopup(popup)
+          .addTo(this.markerLayer)
+      })
+
+      if (withCoords.length > 0 && this.map) {
+        const bounds = L.latLngBounds(withCoords.map((d) => [d.latitude, d.longitude]))
+        this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 })
+      }
+    },
+  },
 }
-
-onMounted(() => {
-  map = L.map(mapEl.value, { center: props.center, zoom: 7 })
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
-    maxZoom: 19,
-  }).addTo(map)
-
-  markerLayer = L.layerGroup().addTo(map)
-  addMarkers()
-})
-
-onUnmounted(() => {
-  map?.remove()
-  map = null
-})
-
-watch(() => props.devices, addMarkers, { deep: true })
 </script>
 
 <style scoped>

@@ -1,16 +1,13 @@
 <template>
   <div class="project-page">
-    <div v-if="!project" class="loading">Loading…</div>
+    <div v-if="!project" class="loading">Loading...</div>
 
     <template v-else>
       <div class="page-header">
-        <div>
-          <router-link to="/dashboard" class="back-link">← Dashboard</router-link>
-          <h1>{{ project.name }}</h1>
-        </div>
+        <router-link to="/dashboard" class="back-link">&larr; Dashboard</router-link>
+        <h1>{{ project.name }}</h1>
       </div>
 
-      <!-- Tabs -->
       <div class="tabs">
         <button v-for="tab in tabs" :key="tab.id"
                 :class="{ active: activeTab === tab.id }"
@@ -19,7 +16,7 @@
         </button>
       </div>
 
-      <!-- Settings tab -->
+      <!-- Settings -->
       <div v-if="activeTab === 'settings'" class="card">
         <h2>Project settings</h2>
         <form @submit.prevent="saveSettings">
@@ -40,26 +37,24 @@
             </div>
             <div class="field">
               <label>Alert webhook URL</label>
-              <input v-model="settingsForm.alertWebhookUrl" type="url" placeholder="https://…" />
+              <input v-model="settingsForm.alertWebhookUrl" type="url" placeholder="https://..." />
             </div>
           </div>
           <p v-if="settingsMsg" class="success">{{ settingsMsg }}</p>
           <div class="form-actions">
             <button type="submit" :disabled="savingSettings">
-              {{ savingSettings ? 'Saving…' : 'Save changes' }}
+              {{ savingSettings ? 'Saving...' : 'Save changes' }}
             </button>
           </div>
         </form>
       </div>
 
-      <!-- API Keys tab -->
+      <!-- API Keys -->
       <div v-if="activeTab === 'keys'">
         <div class="card">
           <div class="section-header">
             <h2>API Keys</h2>
-            <button class="btn-secondary" @click="showCreateKey = !showCreateKey">
-              + New key
-            </button>
+            <button class="btn-secondary" @click="showCreateKey = !showCreateKey">+ New key</button>
           </div>
 
           <form v-if="showCreateKey" class="inline-form" @submit.prevent="createKey">
@@ -72,9 +67,8 @@
             <button type="button" class="btn-ghost" @click="showCreateKey = false">Cancel</button>
           </form>
 
-          <!-- Newly created key — show full key once -->
           <div v-if="createdKey" class="key-reveal">
-            <p><strong>Copy your key — it won't be shown again:</strong></p>
+            <p><strong>Copy your key — it will not be shown again:</strong></p>
             <div class="key-value">
               <code>{{ createdKey.fullKey }}</code>
               <button type="button" @click="copyKey(createdKey.fullKey)">Copy</button>
@@ -85,12 +79,7 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Prefix</th>
-                <th>Environment</th>
-                <th>Created</th>
-                <th>Expires</th>
-                <th></th>
+                <th>Name</th><th>Prefix</th><th>Environment</th><th>Created</th><th>Expires</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -99,27 +88,23 @@
               </tr>
               <tr v-for="key in apiKeys" :key="key.id">
                 <td>{{ key.name }}</td>
-                <td class="mono">{{ key.keyPrefix }}…</td>
+                <td class="mono">{{ key.keyPrefix }}...</td>
                 <td><span class="badge">{{ key.environment }}</span></td>
                 <td>{{ formatDate(key.createdAt) }}</td>
-                <td>{{ key.expiresAt ? formatDate(key.expiresAt) : '—' }}</td>
-                <td>
-                  <button class="btn-danger-sm" @click="revokeKey(key.id)">Revoke</button>
-                </td>
+                <td>{{ key.expiresAt ? formatDate(key.expiresAt) : '-' }}</td>
+                <td><button class="btn-danger-sm" @click="revokeKey(key.id)">Revoke</button></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Alert Rules tab -->
+      <!-- Alert Rules -->
       <div v-if="activeTab === 'alerts'">
         <div class="card">
           <div class="section-header">
             <h2>Alert Rules</h2>
-            <button class="btn-secondary" @click="showCreateRule = !showCreateRule">
-              + New rule
-            </button>
+            <button class="btn-secondary" @click="showCreateRule = !showCreateRule">+ New rule</button>
           </div>
 
           <form v-if="showCreateRule" class="alert-form" @submit.prevent="createRule">
@@ -138,9 +123,9 @@
                 <label>Condition *</label>
                 <select v-model="newRule.condition">
                   <option value="gt">Greater than (&gt;)</option>
-                  <option value="gte">Greater than or equal (≥)</option>
+                  <option value="gte">Greater than or equal (&ge;)</option>
                   <option value="lt">Less than (&lt;)</option>
-                  <option value="lte">Less than or equal (≤)</option>
+                  <option value="lte">Less than or equal (&le;)</option>
                   <option value="eq">Equal to (=)</option>
                 </select>
               </div>
@@ -161,7 +146,7 @@
             </div>
             <div class="form-actions">
               <button type="submit" :disabled="creatingRule">
-                {{ creatingRule ? 'Creating…' : 'Create rule' }}
+                {{ creatingRule ? 'Creating...' : 'Create rule' }}
               </button>
               <button type="button" class="btn-ghost" @click="showCreateRule = false">Cancel</button>
             </div>
@@ -170,12 +155,7 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Metric</th>
-                <th>Condition</th>
-                <th>Device</th>
-                <th>Last fired</th>
-                <th></th>
+                <th>Name</th><th>Metric</th><th>Condition</th><th>Device</th><th>Last fired</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -188,26 +168,20 @@
                 <td>{{ conditionLabel(rule.condition) }} {{ rule.threshold }}</td>
                 <td>{{ rule.deviceId || 'All' }}</td>
                 <td>{{ rule.lastFiredAt ? formatDate(rule.lastFiredAt) : 'Never' }}</td>
-                <td>
-                  <button class="btn-danger-sm" @click="deleteRule(rule.id)">Delete</button>
-                </td>
+                <td><button class="btn-danger-sm" @click="deleteRule(rule.id)">Delete</button></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Devices tab -->
+      <!-- Devices -->
       <div v-if="activeTab === 'devices'" class="card">
         <h2>Devices</h2>
         <table class="data-table">
           <thead>
             <tr>
-              <th>Device ID</th>
-              <th>Name</th>
-              <th>Firmware</th>
-              <th>Location</th>
-              <th>Last seen</th>
+              <th>Device ID</th><th>Name</th><th>Firmware</th><th>Location</th><th>Last seen</th>
             </tr>
           </thead>
           <tbody>
@@ -216,9 +190,9 @@
             </tr>
             <tr v-for="d in devices" :key="d.id">
               <td class="mono">{{ d.deviceId }}</td>
-              <td>{{ d.name || '—' }}</td>
-              <td>{{ d.firmwareVersion || '—' }}</td>
-              <td>{{ d.locationLabel || (d.latitude ? `${d.latitude.toFixed(4)}, ${d.longitude.toFixed(4)}` : '—') }}</td>
+              <td>{{ d.name || '-' }}</td>
+              <td>{{ d.firmwareVersion || '-' }}</td>
+              <td>{{ d.locationLabel || (d.latitude ? d.latitude.toFixed(4) + ', ' + d.longitude.toFixed(4) : '-') }}</td>
               <td>{{ d.lastSeenAt ? formatDate(d.lastSeenAt) : 'Never' }}</td>
             </tr>
           </tbody>
@@ -228,138 +202,146 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+<script>
+import { mapActions } from 'pinia'
 import { useProjectStore } from '../../store/project.js'
 import api from '../../api/client.js'
 
-const route = useRoute()
-const projectStore = useProjectStore()
+export default {
+  name: 'ProjectView',
 
-const project = ref(null)
-const activeTab = ref('settings')
-const tabs = [
-  { id: 'settings', label: 'Settings' },
-  { id: 'keys', label: 'API Keys' },
-  { id: 'alerts', label: 'Alert Rules' },
-  { id: 'devices', label: 'Devices' },
-]
+  data() {
+    return {
+      project:        null,
+      activeTab:      'settings',
+      tabs: [
+        { id: 'settings', label: 'Settings' },
+        { id: 'keys',     label: 'API Keys' },
+        { id: 'alerts',   label: 'Alert Rules' },
+        { id: 'devices',  label: 'Devices' },
+      ],
+      settingsForm:   {},
+      savingSettings: false,
+      settingsMsg:    '',
+      apiKeys:        [],
+      showCreateKey:  false,
+      creatingKey:    false,
+      createdKey:     null,
+      newKey:         { name: '', environment: 'live' },
+      alertRules:     [],
+      showCreateRule: false,
+      creatingRule:   false,
+      newRule:        { name: '', metricName: '', condition: 'gt', threshold: null, deviceId: '', suppressionWindowS: 300 },
+      devices:        [],
+    }
+  },
 
-const settingsForm = ref({})
-const savingSettings = ref(false)
-const settingsMsg = ref('')
+  watch: {
+    '$route.params.id'() { this.loadProject() },
+  },
 
-const apiKeys = ref([])
-const showCreateKey = ref(false)
-const creatingKey = ref(false)
-const createdKey = ref(null)
-const newKey = ref({ name: '', environment: 'live' })
+  mounted() {
+    this.loadProject()
+  },
 
-const alertRules = ref([])
-const showCreateRule = ref(false)
-const creatingRule = ref(false)
-const newRule = ref({ name: '', metricName: '', condition: 'gt', threshold: null, deviceId: '', suppressionWindowS: 300 })
+  methods: {
+    ...mapActions(useProjectStore, ['updateProject']),
 
-const devices = ref([])
+    async loadProject() {
+      const id = this.$route.params.id
+      const { data } = await api.get(`/api/v1/projects/${id}`)
+      this.project = data
+      this.settingsForm = {
+        name:            data.name,
+        description:     data.description || '',
+        alertEmail:      data.alertEmail || '',
+        alertWebhookUrl: data.alertWebhookUrl || '',
+      }
+      await Promise.all([this.loadKeys(), this.loadRules(), this.loadDevices()])
+    },
 
-async function loadProject() {
-  const id = route.params.id
-  const { data } = await api.get(`/api/v1/projects/${id}`)
-  project.value = data
-  settingsForm.value = {
-    name: data.name,
-    description: data.description || '',
-    alertEmail: data.alertEmail || '',
-    alertWebhookUrl: data.alertWebhookUrl || '',
-  }
-  await Promise.all([loadKeys(), loadRules(), loadDevices()])
+    async loadKeys() {
+      const { data } = await api.get('/api/v1/keys', { params: { projectId: this.$route.params.id } })
+      this.apiKeys = data
+    },
+
+    async loadRules() {
+      const { data } = await api.get(`/api/v1/projects/${this.$route.params.id}/alert-rules`)
+      this.alertRules = data
+    },
+
+    async loadDevices() {
+      const { data } = await api.get(`/api/v1/projects/${this.$route.params.id}/devices`)
+      this.devices = data
+    },
+
+    async saveSettings() {
+      this.savingSettings = true
+      this.settingsMsg = ''
+      try {
+        const updated = await this.updateProject(this.$route.params.id, this.settingsForm)
+        this.project = updated
+        this.settingsMsg = 'Settings saved.'
+        setTimeout(() => { this.settingsMsg = '' }, 3000)
+      } finally {
+        this.savingSettings = false
+      }
+    },
+
+    async createKey() {
+      this.creatingKey = true
+      try {
+        const { data } = await api.post('/api/v1/keys', {
+          projectId:   this.$route.params.id,
+          name:        this.newKey.name,
+          environment: this.newKey.environment,
+        })
+        this.createdKey  = data
+        this.newKey      = { name: '', environment: 'live' }
+        this.showCreateKey = false
+        await this.loadKeys()
+      } finally {
+        this.creatingKey = false
+      }
+    },
+
+    async revokeKey(id) {
+      if (!confirm('Revoke this key? Devices using it will stop sending data.')) return
+      await api.delete(`/api/v1/keys/${id}`)
+      await this.loadKeys()
+    },
+
+    async createRule() {
+      this.creatingRule = true
+      try {
+        const payload = { ...this.newRule }
+        if (!payload.deviceId) delete payload.deviceId
+        await api.post(`/api/v1/projects/${this.$route.params.id}/alert-rules`, payload)
+        this.newRule = { name: '', metricName: '', condition: 'gt', threshold: null, deviceId: '', suppressionWindowS: 300 }
+        this.showCreateRule = false
+        await this.loadRules()
+      } finally {
+        this.creatingRule = false
+      }
+    },
+
+    async deleteRule(id) {
+      if (!confirm('Delete this alert rule?')) return
+      await api.delete(`/api/v1/projects/${this.$route.params.id}/alert-rules/${id}`)
+      await this.loadRules()
+    },
+
+    copyKey(key) {
+      navigator.clipboard.writeText(key)
+    },
+
+    formatDate(iso) { return new Date(iso).toLocaleString() },
+
+    conditionLabel(c) {
+      return { gt: '>', gte: '>=', lt: '<', lte: '<=', eq: '=' }[c] || c
+    },
+  },
 }
-
-async function loadKeys() {
-  const { data } = await api.get('/api/v1/keys', { params: { projectId: route.params.id } })
-  apiKeys.value = data
-}
-
-async function loadRules() {
-  const { data } = await api.get(`/api/v1/projects/${route.params.id}/alert-rules`)
-  alertRules.value = data
-}
-
-async function loadDevices() {
-  const { data } = await api.get(`/api/v1/projects/${route.params.id}/devices`)
-  devices.value = data
-}
-
-async function saveSettings() {
-  savingSettings.value = true
-  settingsMsg.value = ''
-  try {
-    const updated = await projectStore.updateProject(route.params.id, settingsForm.value)
-    project.value = updated
-    settingsMsg.value = 'Settings saved.'
-    setTimeout(() => settingsMsg.value = '', 3000)
-  } finally {
-    savingSettings.value = false
-  }
-}
-
-async function createKey() {
-  creatingKey.value = true
-  try {
-    const { data } = await api.post('/api/v1/keys', {
-      projectId: route.params.id,
-      name: newKey.value.name,
-      environment: newKey.value.environment,
-    })
-    createdKey.value = data
-    newKey.value = { name: '', environment: 'live' }
-    showCreateKey.value = false
-    await loadKeys()
-  } finally {
-    creatingKey.value = false
-  }
-}
-
-async function revokeKey(id) {
-  if (!confirm('Revoke this key? Devices using it will stop sending data.')) return
-  await api.delete(`/api/v1/keys/${id}`)
-  await loadKeys()
-}
-
-async function createRule() {
-  creatingRule.value = true
-  try {
-    const payload = { ...newRule.value }
-    if (!payload.deviceId) delete payload.deviceId
-    await api.post(`/api/v1/projects/${route.params.id}/alert-rules`, payload)
-    newRule.value = { name: '', metricName: '', condition: 'gt', threshold: null, deviceId: '', suppressionWindowS: 300 }
-    showCreateRule.value = false
-    await loadRules()
-  } finally {
-    creatingRule.value = false
-  }
-}
-
-async function deleteRule(id) {
-  if (!confirm('Delete this alert rule?')) return
-  await api.delete(`/api/v1/projects/${route.params.id}/alert-rules/${id}`)
-  await loadRules()
-}
-
-function copyKey(key) {
-  navigator.clipboard.writeText(key)
-}
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleString()
-}
-
-const conditionLabels = { gt: '>', gte: '≥', lt: '<', lte: '≤', eq: '=' }
-function conditionLabel(c) { return conditionLabels[c] || c }
-
-onMounted(loadProject)
-watch(() => route.params.id, loadProject)
 </script>
 
 <style scoped>
@@ -392,7 +374,6 @@ h1 { font-size: 1.5rem; color: #1a1a2e; }
   margin-bottom: 16px;
 }
 .card h2 { font-size: 1rem; font-weight: 600; color: #333; margin-bottom: 20px; }
-
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 
 form { display: flex; flex-direction: column; gap: 16px; }
@@ -503,7 +484,6 @@ button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
 .data-table tr:last-child td { border-bottom: none; }
 .mono { font-family: monospace; color: #555; }
 .empty-row { text-align: center; color: #aaa; padding: 32px !important; }
-
 .badge { background: #e8f0fe; color: #1a73e8; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; }
 .success { color: #137333; background: #e6f4ea; padding: 8px 12px; border-radius: 6px; font-size: 0.875rem; }
 </style>

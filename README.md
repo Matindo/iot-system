@@ -1,6 +1,6 @@
-# IoTeka Cloud Platform
+﻿# IoTeka Cloud Platform
 
-> A multi-tenant IoT data ingestion, storage, and visualization platform built for Africa — starting with Kenya, designed to scale continent-wide.
+> A multi-tenant IoT data ingestion, storage, and visualization platform built for Africa â€” starting with Kenya, designed to scale continent-wide.
 
 ---
 
@@ -28,7 +28,7 @@
 
 ## 1. Project Overview
 
-Afridata is a cloud IoT data platform that allows developers, researchers, and businesses across Africa to:
+IoTeca is a cloud IoT data platform that allows developers, researchers, and businesses across Africa to:
 
 - Register an account and create IoT projects
 - Connect sensors, microcontrollers, and applications using their protocol of choice (MQTT, HTTP, WebSocket, CoAP)
@@ -46,59 +46,59 @@ The platform is built around the principle that IoT data is fundamentally differ
 
 ### Core Design Principles
 
-- **Speed over everything else at the ingestion layer** — a device should never have to wait
-- **Multi-tenancy with hard isolation** — one project's load must never affect another
-- **Free tier that is genuinely useful** — enough to prototype and demo, with a clear, transparent upgrade path
-- **Self-hosted infrastructure** — no dependency on third-party IoT managed services; full control over auth, data, and cost
+- **Speed over everything else at the ingestion layer** â€” a device should never have to wait
+- **Multi-tenancy with hard isolation** â€” one project's load must never affect another
+- **Free tier that is genuinely useful** â€” enough to prototype and demo, with a clear, transparent upgrade path
+- **Self-hosted infrastructure** â€” no dependency on third-party IoT managed services; full control over auth, data, and cost
 
 ---
 
 ## 2. System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         DEVICE LAYER                                │
-│         MQTT · HTTP REST · WebSocket · CoAP · SDK (Python/JS)       │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │ API Key in connection credentials
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                    EMQX BROKER (self-hosted)                         │
-│    Auth webhook → Java Auth Service · Topic routing · TLS           │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │ validated messages
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                   APACHE KAFKA (message queue)                       │
-│        topic: raw.ingest.{region} · backpressure buffer             │
-└────────┬──────────────────┬───────────────────────┬─────────────────┘
-         │                  │                       │
-         ▼                  ▼                       ▼
-  ┌─────────────┐   ┌──────────────┐   ┌─────────────────────┐
-  │  Ingestion  │   │ Alert Engine │   │   Quota Counter     │
-  │   Service   │   │    Service   │   │      Service        │
-  │   (Java)    │   │    (Java)    │   │   (Java + Redis)    │
-  └──────┬──────┘   └──────┬───────┘   └─────────┬───────────┘
-         │                  │                     │
-         ▼                  ▼                     ▼
-  ┌─────────────┐   ┌──────────────┐   ┌─────────────────────┐
-  │TimescaleDB  │   │  PostgreSQL  │   │       Redis         │
-  │ (sensor     │   │  (relational │   │  (rate limits,      │
-  │  hypertable)│   │   metadata)  │   │   counters, cache)  │
-  └──────┬──────┘   └──────┬───────┘   └─────────┬───────────┘
-         └──────────────────┴─────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│              API GATEWAY  (Java Spring Boot)                         │
-│  /ingest · /query · /projects · /devices · /auth · /admin · /keys   │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                 FRONTEND (Vue.js · Options API)                      │
-│     Dashboard · Device Map · Project Manager · Admin Panel          │
-└─────────────────────────────────────────────────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                         DEVICE LAYER                                â”‚
+â”‚         MQTT Â· HTTP REST Â· WebSocket Â· CoAP Â· SDK (Python/JS)       â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                           â”‚ API Key in connection credentials
+                           â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                    EMQX BROKER (self-hosted)                         â”‚
+â”‚    Auth webhook â†’ Java Auth Service Â· Topic routing Â· TLS           â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                           â”‚ validated messages
+                           â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                   APACHE KAFKA (message queue)                       â”‚
+â”‚        topic: raw.ingest.{region} Â· backpressure buffer             â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚                  â”‚                       â”‚
+         â–¼                  â–¼                       â–¼
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â”‚  Ingestion  â”‚   â”‚ Alert Engine â”‚   â”‚   Quota Counter     â”‚
+  â”‚   Service   â”‚   â”‚    Service   â”‚   â”‚      Service        â”‚
+  â”‚   (Java)    â”‚   â”‚    (Java)    â”‚   â”‚   (Java + Redis)    â”‚
+  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â”‚                  â”‚                     â”‚
+         â–¼                  â–¼                     â–¼
+  â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+  â”‚TimescaleDB  â”‚   â”‚  PostgreSQL  â”‚   â”‚       Redis         â”‚
+  â”‚ (sensor     â”‚   â”‚  (relational â”‚   â”‚  (rate limits,      â”‚
+  â”‚  hypertable)â”‚   â”‚   metadata)  â”‚   â”‚   counters, cache)  â”‚
+  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                           â”‚
+                           â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚              API GATEWAY  (Java Spring Boot)                         â”‚
+â”‚  /ingest Â· /query Â· /projects Â· /devices Â· /auth Â· /admin Â· /keys   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                           â”‚
+                           â–¼
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                 FRONTEND (Vue.js Â· Options API)                      â”‚
+â”‚     Dashboard Â· Device Map Â· Project Manager Â· Admin Panel          â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 All services are containerized. Each box above is a separate Docker container, orchestrated via Docker Compose.
@@ -126,13 +126,13 @@ All services are containerized. Each box above is a separate Docker container, o
 
 ## 4. Service Breakdown
 
-The platform is composed of the following independent microservices. Each runs in its own container and communicates over the internal Docker network (`afridata-internal`).
+The platform is composed of the following independent microservices. Each runs in its own container and communicates over the internal Docker network (`IoTeca-internal`).
 
 ---
 
-### 4.1 `auth-service` — Port 8081
+### 4.1 `auth-service` â€” Port 8081
 
-**Package:** `io.afridata.auth` · **Tech:** Spring Boot 3.2, Spring Security 6, JJWT 0.12
+**Package:** `io.ioteca.auth` Â· **Tech:** Spring Boot 3.2, Spring Security 6, JJWT 0.12
 
 **Responsibilities**
 
@@ -142,38 +142,38 @@ The platform is composed of the following independent microservices. Each runs i
 | Login | Verifies password against bcrypt hash, issues access + refresh JWT pair |
 | JWT issuance | HS256, signed with `JWT_SECRET`; access token 60 min, refresh token 30 days |
 | Token refresh | Validates refresh token `type` claim, issues new access token without re-login |
-| API key generation | Produces `afridata_{env}_{project_short_id}_{20char_secret}`, stores SHA-256 hash only |
+| API key generation | Produces `IoTeca_{env}_{project_short_id}_{20char_secret}`, stores SHA-256 hash only |
 | API key revocation | Sets `is_active=false`, stamps `revoked_at`, records reason |
 | EMQX auth webhook | Validates API key hash + project ownership on every device connect attempt |
-| EMQX ACL webhook | Enforces topic-level publish rights: device may only publish to `afridata/{its_project_id}/#` |
+| EMQX ACL webhook | Enforces topic-level publish rights: device may only publish to `IoTeca/{its_project_id}/#` |
 
 **REST Endpoints**
 
 ```
-POST /api/v1/auth/register          — create account, returns JWT pair
-POST /api/v1/auth/login             — returns JWT pair
-POST /api/v1/auth/refresh           — exchange refresh token for new access token
-GET  /api/v1/auth/me                — current user profile [JWT required]
-POST /api/v1/keys                   — create API key [JWT required]
-GET  /api/v1/keys?projectId={uuid}  — list project's API keys [JWT required]
-DELETE /api/v1/keys/{id}            — revoke key [JWT required]
-POST /api/internal/emqx/auth        — EMQX auth webhook (internal network only)
-POST /api/internal/emqx/acl         — EMQX ACL webhook (internal network only)
-GET  /api/internal/emqx/key/validate?key={k} — key validation for other services
+POST /api/v1/auth/register          â€” create account, returns JWT pair
+POST /api/v1/auth/login             â€” returns JWT pair
+POST /api/v1/auth/refresh           â€” exchange refresh token for new access token
+GET  /api/v1/auth/me                â€” current user profile [JWT required]
+POST /api/v1/keys                   â€” create API key [JWT required]
+GET  /api/v1/keys?projectId={uuid}  â€” list project's API keys [JWT required]
+DELETE /api/v1/keys/{id}            â€” revoke key [JWT required]
+POST /api/internal/emqx/auth        â€” EMQX auth webhook (internal network only)
+POST /api/internal/emqx/acl         â€” EMQX ACL webhook (internal network only)
+GET  /api/internal/emqx/key/validate?key={k} â€” key validation for other services
 ```
 
 **Key implementation details**
 
-- `JwtService` — issues and validates tokens locally; shared `JWT_SECRET` allows api-gateway to validate without calling auth-service on every request
-- `ApiKeyService` — API key format: `afridata_{live|test}_{8-char project id}_{20-char URL-safe base64 secret}`; first 20 chars stored as `key_prefix` for UI display, rest stored only as `SHA-256(full_key)`
-- `JwtAuthenticationFilter` — extracts `Bearer` token per request, sets Spring Security context
+- `JwtService` â€” issues and validates tokens locally; shared `JWT_SECRET` allows api-gateway to validate without calling auth-service on every request
+- `ApiKeyService` â€” API key format: `IoTeca_{live|test}_{8-char project id}_{20-char URL-safe base64 secret}`; first 20 chars stored as `key_prefix` for UI display, rest stored only as `SHA-256(full_key)`
+- `JwtAuthenticationFilter` â€” extracts `Bearer` token per request, sets Spring Security context
 - Security: `/api/internal/**` and `/api/v1/auth/**` are permit-all at the filter chain; all other routes require a valid, non-refresh JWT
 
 ---
 
-### 4.2 `ingestion-service` — Port 8082
+### 4.2 `ingestion-service` â€” Port 8082
 
-**Package:** `io.afridata.ingestion` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data JPA
+**Package:** `io.ioteca.ingestion` Â· **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data JPA
 
 **Responsibilities**
 
@@ -181,7 +181,7 @@ GET  /api/internal/emqx/key/validate?key={k} — key validation for other servic
 |---|---|
 | Consume raw messages | Kafka listener on `raw.ingest.af-ke-1`, concurrency=3 |
 | Payload validation | Rejects messages missing `device_id` or empty `metrics` map; bad messages are acked immediately (no retry) |
-| Narrow-row storage | Each metric key in the payload becomes a separate row in `tsdata.sensor_data` (wide payloads → multiple rows) |
+| Narrow-row storage | Each metric key in the payload becomes a separate row in `tsdata.sensor_data` (wide payloads â†’ multiple rows) |
 | Timestamp handling | Uses device-supplied `timestamp` (epoch ms) if present; falls back to server ingestion time |
 | Device auto-registration | First message from an unknown `device_id` inserts a new row in `platform.devices`; subsequent messages update `last_seen_at` |
 | Downstream fan-out | After successful write, emits `ProcessedMessage` to `processed.ingest.af-ke-1` for alert-engine and other consumers |
@@ -190,11 +190,11 @@ GET  /api/internal/emqx/key/validate?key={k} — key validation for other servic
 
 ```
 Kafka raw.ingest.af-ke-1
-  → RawIngestConsumer (concurrency 3)
-    → IngestionService.ingest()
-      → SensorDataRepository.insertRaw()   → tsdata.sensor_data
-      → DeviceRepository.touchLastSeen()   → platform.devices
-    → KafkaTemplate.send(processed.ingest.af-ke-1)
+  â†’ RawIngestConsumer (concurrency 3)
+    â†’ IngestionService.ingest()
+      â†’ SensorDataRepository.insertRaw()   â†’ tsdata.sensor_data
+      â†’ DeviceRepository.touchLastSeen()   â†’ platform.devices
+    â†’ KafkaTemplate.send(processed.ingest.af-ke-1)
 ```
 
 **Key implementation details**
@@ -205,9 +205,9 @@ Kafka raw.ingest.af-ke-1
 
 ---
 
-### 4.3 `alert-engine` — Port 8083
+### 4.3 `alert-engine` â€” Port 8083
 
-**Package:** `io.afridata.alert` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data JPA
+**Package:** `io.ioteca.alert` Â· **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data JPA
 
 **Responsibilities**
 
@@ -216,7 +216,7 @@ Kafka raw.ingest.af-ke-1
 | Consume processed messages | Kafka listener on `processed.ingest.af-ke-1`, concurrency=2 |
 | Rule lookup | For each metric in the message, queries `platform.alert_rules` matching project + metric + device (or all devices) |
 | Condition evaluation | Supports: `gt`, `gte`, `lt`, `lte`, `eq`; non-numeric metric values are skipped |
-| Suppression | Skips firing if `last_fired_at + suppression_window_s > now()` — prevents alert flooding |
+| Suppression | Skips firing if `last_fired_at + suppression_window_s > now()` â€” prevents alert flooding |
 | Alert event emission | Writes `AlertEvent` to Kafka topic `alert.events`; notification-service handles delivery |
 
 **Supported conditions**
@@ -224,23 +224,23 @@ Kafka raw.ingest.af-ke-1
 | Condition | Description |
 |---|---|
 | `gt` | Fires when value > threshold |
-| `gte` | Fires when value ≥ threshold |
+| `gte` | Fires when value â‰¥ threshold |
 | `lt` | Fires when value < threshold |
-| `lte` | Fires when value ≤ threshold |
+| `lte` | Fires when value â‰¤ threshold |
 | `eq` | Fires when value == threshold |
-| `absence` | Planned — fires when no message received within `absence_window_s` |
+| `absence` | Planned â€” fires when no message received within `absence_window_s` |
 
 **Key implementation details**
 
 - `AlertEvaluator` stamps `last_fired_at` on the rule before emitting the event (within the same transaction), preventing race conditions in concurrent consumers
 - Rules with `device_id = NULL` apply to all devices in the project; device-specific rules take precedence
-- Evaluation errors (bad JSON, DB failure) are caught and acked — they don't block the pipeline
+- Evaluation errors (bad JSON, DB failure) are caught and acked â€” they don't block the pipeline
 
 ---
 
-### 4.4 `quota-service` — Port 8084
+### 4.4 `quota-service` â€” Port 8084
 
-**Package:** `io.afridata.quota` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data Redis, Spring Data JPA
+**Package:** `io.ioteca.quota` Â· **Tech:** Spring Boot 3.2, Spring Kafka, Spring Data Redis, Spring Data JPA
 
 **Responsibilities**
 
@@ -248,33 +248,33 @@ Kafka raw.ingest.af-ke-1
 |---|---|
 | Message counting | O(1) atomic `INCR` on Redis key `project:{id}:msgs:{YYYY-MM-DD}` |
 | Counter TTL | Set to 172,800 s (2 days) on first write; resets automatically at midnight |
-| Tier limit lookup | Joins `user_subscriptions → subscription_tiers` to find the active tier's `max_messages_per_day` |
+| Tier limit lookup | Joins `user_subscriptions â†’ subscription_tiers` to find the active tier's `max_messages_per_day` |
 | Quota events | Publishes to `quota.events` when count crosses 80% (`WARNING_80`) or 100% (`EXCEEDED`) of limit |
-| Unlimited tiers | `max_messages_per_day = -1` short-circuits all checks — Enterprise tier never throttled |
+| Unlimited tiers | `max_messages_per_day = -1` short-circuits all checks â€” Enterprise tier never throttled |
 
 **Redis key design**
 
 ```
-project:{uuid}:msgs:2025-08-15   →   atomic counter, TTL 2 days
+project:{uuid}:msgs:2025-08-15   â†’   atomic counter, TTL 2 days
 ```
 
 **Key implementation details**
 
-- Quota-service and ingestion-service both consume `raw.ingest.af-ke-1` with **different consumer group IDs** — each receives every message independently
+- Quota-service and ingestion-service both consume `raw.ingest.af-ke-1` with **different consumer group IDs** â€” each receives every message independently
 - Quota checks happen after the message is already written to TimescaleDB; enforcement at 100% is done at the broker level (EMQX rate limiter) and at the api-gateway (HTTP 429)
 - `QuotaStatus` enum: `OK` | `WARNING_80` | `EXCEEDED`
 
 ---
 
-### 4.5 `api-gateway` — Port 8080 (external-facing)
+### 4.5 `api-gateway` â€” Port 8080 (external-facing)
 
-**Package:** `io.afridata.gateway` · **Tech:** Spring Boot 3.2, Spring Security 6, Spring Kafka, Spring Data Redis, JJWT
+**Package:** `io.ioteca.gateway` Â· **Tech:** Spring Boot 3.2, Spring Security 6, Spring Kafka, Spring Data Redis, JJWT
 
 **Responsibilities**
 
 | Concern | Mechanism |
 |---|---|
-| JWT validation | Validates `Bearer` tokens locally using shared `JWT_SECRET` — no auth-service call per request |
+| JWT validation | Validates `Bearer` tokens locally using shared `JWT_SECRET` â€” no auth-service call per request |
 | Rate limiting | Redis token-bucket per user: `ratelimit:{userId}:api` incremented per request, TTL 1 min |
 | HTTP ingestion | Validates JWT, adds `project_id` to payload, publishes to `raw.ingest.af-ke-1` |
 | Batch ingestion | Accepts up to 100 readings per POST; each published as an individual Kafka message |
@@ -285,30 +285,30 @@ project:{uuid}:msgs:2025-08-15   →   atomic counter, TTL 2 days
 **REST Endpoints**
 
 ```
-POST /api/v1/ingest                         — single reading [JWT or API key]
-POST /api/v1/ingest/batch                   — up to 100 readings [JWT or API key]
-GET  /api/v1/projects                       — list user projects [JWT]
-POST /api/v1/projects                       — create project [JWT]
-GET  /api/v1/projects/{id}                  — get project [JWT]
-PUT  /api/v1/projects/{id}                  — update project [JWT]
-DELETE /api/v1/projects/{id}                — soft-delete project [JWT]
-GET  /api/v1/projects/{id}/devices          — list devices [JWT]
-GET  /api/v1/projects/{id}/devices/{did}    — get device [JWT]
-PATCH /api/v1/projects/{id}/devices/{did}   — update device metadata [JWT]
-GET  /api/v1/admin/**                       — admin endpoints [ROLE_ADMIN]
+POST /api/v1/ingest                         â€” single reading [JWT or API key]
+POST /api/v1/ingest/batch                   â€” up to 100 readings [JWT or API key]
+GET  /api/v1/projects                       â€” list user projects [JWT]
+POST /api/v1/projects                       â€” create project [JWT]
+GET  /api/v1/projects/{id}                  â€” get project [JWT]
+PUT  /api/v1/projects/{id}                  â€” update project [JWT]
+DELETE /api/v1/projects/{id}                â€” soft-delete project [JWT]
+GET  /api/v1/projects/{id}/devices          â€” list devices [JWT]
+GET  /api/v1/projects/{id}/devices/{did}    â€” get device [JWT]
+PATCH /api/v1/projects/{id}/devices/{did}   â€” update device metadata [JWT]
+GET  /api/v1/admin/**                       â€” admin endpoints [ROLE_ADMIN]
 ```
 
 **Key implementation details**
 
-- `JwtAuthenticationFilter` mirrors the one in auth-service — same secret, same validation logic, no cross-service call
+- `JwtAuthenticationFilter` mirrors the one in auth-service â€” same secret, same validation logic, no cross-service call
 - Project soft-delete sets `is_active=false` rather than deleting rows, preserving TimescaleDB data for the retention window
-- `IngestController` resolves project ID from the JWT subject (user → project lookup) for HTTP ingestion; the Kafka message key is set to `project_id` so ingestion-service can correlate it
+- `IngestController` resolves project ID from the JWT subject (user â†’ project lookup) for HTTP ingestion; the Kafka message key is set to `project_id` so ingestion-service can correlate it
 
 ---
 
-### 4.6 `notification-service` — Port 8085
+### 4.6 `notification-service` â€” Port 8085
 
-**Package:** `io.afridata.notification` · **Tech:** Spring Boot 3.2, Spring Kafka, Spring Mail, Spring Data JPA
+**Package:** `io.ioteca.notification` Â· **Tech:** Spring Boot 3.2, Spring Kafka, Spring Mail, Spring Data JPA
 
 **Responsibilities**
 
@@ -330,8 +330,8 @@ GET  /api/v1/admin/**                       — admin endpoints [ROLE_ADMIN]
 
 **Key implementation details**
 
-- Recipient email priority: `project.alert_email` → project owner's `users.email`
-- All Kafka consumption errors are caught and acked — a failed notification does not stall the pipeline
+- Recipient email priority: `project.alert_email` â†’ project owner's `users.email`
+- All Kafka consumption errors are caught and acked â€” a failed notification does not stall the pipeline
 - `EmailService.wasSentRecently()` prevents duplicate emails within a 60-minute window for the same project + type
 - SMTP configuration maps to standard Spring Mail properties via env vars (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`)
 
@@ -468,8 +468,8 @@ CREATE INDEX idx_projects_user ON platform.projects (user_id);
 
 -- ============================================================
 -- API KEYS
--- Structured format: afridata_{env}_{project_short_id}_{secret}
--- Example:           afridata_live_a3f9b2c1_k7x2m9q4r8v3n1p5
+-- Structured format: IoTeca_{env}_{project_short_id}_{secret}
+-- Example:           IoTeca_live_a3f9b2c1_k7x2m9q4r8v3n1p5
 -- Only the hash is stored; the full key is shown to the user once.
 -- ============================================================
 CREATE TABLE platform.api_keys (
@@ -595,7 +595,7 @@ CREATE TABLE platform.admin_audit_log (
 -- ============================================================
 CREATE TABLE tsdata.sensor_data (
     time        TIMESTAMPTZ     NOT NULL,
-    project_id  UUID            NOT NULL,   -- tenant key — always filter on this first
+    project_id  UUID            NOT NULL,   -- tenant key â€” always filter on this first
     device_id   TEXT            NOT NULL,
     metric      TEXT            NOT NULL,   -- field name e.g. "temperature", "humidity", "voltage"
     value       DOUBLE PRECISION,           -- numeric reading; NULL if non-numeric
@@ -627,7 +627,7 @@ CREATE POLICY tenant_isolation ON tsdata.sensor_data
 -- ============================================================
 -- CONTINUOUS AGGREGATES (automatic downsampling)
 -- These are materialized views maintained by TimescaleDB.
--- They run in the background — no cron job needed.
+-- They run in the background â€” no cron job needed.
 -- ============================================================
 
 -- 1-minute averages (for data > 24 hours old)
@@ -706,7 +706,7 @@ SELECT add_retention_policy('tsdata.sensor_data', INTERVAL '90 days');
 
 -- ============================================================
 -- PROJECT QUOTA SNAPSHOTS
--- Daily snapshot of usage per project — used for billing,
+-- Daily snapshot of usage per project â€” used for billing,
 -- admin dashboards, and trend charts. Written by quota-service.
 -- ============================================================
 CREATE TABLE tsdata.project_quota_snapshots (
@@ -731,16 +731,16 @@ CREATE INDEX idx_quota_snapshots_project
 
 ```
 users
-  └──< user_subscriptions >── subscription_tiers
-  └──< projects
-            └──< api_keys
-            └──< devices
-            └──< alert_rules
-            └──< notification_log
+  â””â”€â”€< user_subscriptions >â”€â”€ subscription_tiers
+  â””â”€â”€< projects
+            â””â”€â”€< api_keys
+            â””â”€â”€< devices
+            â””â”€â”€< alert_rules
+            â””â”€â”€< notification_log
 
-tsdata.sensor_data  (project_id FK → projects.id, device_id soft-ref → devices.device_id)
+tsdata.sensor_data  (project_id FK â†’ projects.id, device_id soft-ref â†’ devices.device_id)
 tsdata.sensor_data_1min / 1hr / 1day  (continuous aggregates of sensor_data)
-tsdata.project_quota_snapshots  (project_id FK → projects.id)
+tsdata.project_quota_snapshots  (project_id FK â†’ projects.id)
 ```
 
 ---
@@ -750,18 +750,18 @@ tsdata.project_quota_snapshots  (project_id FK → projects.id)
 ### Key Structure
 
 ```
-afridata_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
-│         │    │           │
-│         │    │           └── 20-char random secret (URL-safe base64)
-│         │    └────────────── 8-char project identifier (first 8 chars of project UUID)
-│         └─────────────────── environment: live | test
-└───────────────────────────── platform prefix (registered with GitLeaks / TruffleHog)
+IoTeca_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
+â”‚         â”‚    â”‚           â”‚
+â”‚         â”‚    â”‚           â””â”€â”€ 20-char random secret (URL-safe base64)
+â”‚         â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ 8-char project identifier (first 8 chars of project UUID)
+â”‚         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ environment: live | test
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ platform prefix (registered with GitLeaks / TruffleHog)
 ```
 
 ### Why This Structure
 
-- The prefix `afridata_` allows GitHub's secret scanner and tools like TruffleHog to detect accidentally committed keys and alert the project owner automatically. You register the prefix pattern with these services.
-- The embedded project short ID means the ingestion service can extract the project context directly from the key string without a database lookup — only a hash comparison is needed to verify the secret portion.
+- The prefix `IoTeca_` allows GitHub's secret scanner and tools like TruffleHog to detect accidentally committed keys and alert the project owner automatically. You register the prefix pattern with these services.
+- The embedded project short ID means the ingestion service can extract the project context directly from the key string without a database lookup â€” only a hash comparison is needed to verify the secret portion.
 - The environment segment prevents a test device from accidentally writing to a production project.
 - The full key is shown to the user **once only** at creation. After that, only `key_prefix` (first 20 chars) is stored in plaintext for UI display. The rest is stored as `SHA-256(full_key)`.
 
@@ -772,7 +772,7 @@ afridata_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
 2. Server generates: prefix + project_short_id + random_secret
 3. Server computes: key_hash = SHA256(full_key)
 4. Server stores: (id, project_id, name, key_prefix, key_hash, environment, scopes, ...)
-5. Server returns: full key to user — THIS IS THE ONLY TIME IT IS VISIBLE
+5. Server returns: full key to user â€” THIS IS THE ONLY TIME IT IS VISIBLE
 6. On ingest: device sends key in MQTT password or HTTP Authorization header
 7. Auth service: key_hash = SHA256(incoming_key), lookup by key_hash, check is_active + expiry
 8. On revoke: set is_active = false, revoked_at = NOW(), revoke_reason = ...
@@ -785,9 +785,9 @@ afridata_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
 ### Flow
 
 ```
-Device  →  EMQX Broker  →  Kafka (raw.ingest.af-ke-1)  →  ingestion-service  →  TimescaleDB
-                │
-                └── Auth webhook → auth-service
+Device  â†’  EMQX Broker  â†’  Kafka (raw.ingest.af-ke-1)  â†’  ingestion-service  â†’  TimescaleDB
+                â”‚
+                â””â”€â”€ Auth webhook â†’ auth-service
                     (called on connect, validates API key, checks quota)
 ```
 
@@ -795,13 +795,13 @@ Device  →  EMQX Broker  →  Kafka (raw.ingest.af-ke-1)  →  ingestion-servic
 
 Devices publish to:
 ```
-afridata/{project_id}/{device_id}/{metric_group}
+IoTeca/{project_id}/{device_id}/{metric_group}
 ```
 
 Examples:
 ```
-afridata/550e8400-e29b-41d4-a716/sensor_01/environment
-afridata/550e8400-e29b-41d4-a716/sensor_01/power
+IoTeca/550e8400-e29b-41d4-a716/sensor_01/environment
+IoTeca/550e8400-e29b-41d4-a716/sensor_01/power
 ```
 
 The broker validates the project_id in the topic matches the project embedded in the API key. A device cannot publish to another project's topic.
@@ -832,7 +832,7 @@ For devices that cannot maintain a persistent TCP connection:
 
 ```
 POST /api/v1/ingest
-Authorization: Bearer afridata_live_a3f9b2c1_...
+Authorization: Bearer IoTeca_live_a3f9b2c1_...
 Content-Type: application/json
 
 { same payload as above }
@@ -856,23 +856,23 @@ The platform supports all four major IoT connection protocols. The choice is ent
 **Why:** Persistent TCP connection, 2-byte protocol overhead per message, designed for low-bandwidth unreliable networks. A sensor sending every second does not pay TCP handshake cost per message.
 
 ```
-Broker host:  mqtt.afridata.io
-Port:         1883 (plain) | 8883 (TLS — required for production)
+Broker host:  mqtt.ioteca.io
+Port:         1883 (plain) | 8883 (TLS â€” required for production)
 Username:     {project_id}
 Password:     {api_key}
 Client ID:    {device_id}  (must be unique per device per project)
-Topic:        afridata/{project_id}/{device_id}/{metric_group}
-QoS:          1 (at-least-once delivery — recommended)
+Topic:        IoTeca/{project_id}/{device_id}/{metric_group}
+QoS:          1 (at-least-once delivery â€” recommended)
 ```
 
 ### HTTP REST (Recommended for scripts and server-side apps)
 
 **Best for:** Python scripts, Node.js applications, server-side integrations, any environment with an HTTP client.
 
-**Why:** Universal support, easy to debug, stateless — no persistent connection required.
+**Why:** Universal support, easy to debug, stateless â€” no persistent connection required.
 
 ```
-POST https://api.afridata.io/v1/ingest
+POST https://api.ioteca.io/v1/ingest
 Authorization: Bearer {api_key}
 Content-Type: application/json
 ```
@@ -882,7 +882,7 @@ Content-Type: application/json
 **Best for:** Browser applications sending sensor data, real-time dashboards that also produce data, applications needing bidirectional streaming.
 
 ```
-wss://ws.afridata.io/v1/stream
+wss://ws.ioteca.io/v1/stream
 Authorization header or ?token={api_key} query param
 ```
 
@@ -893,7 +893,7 @@ Authorization header or ?token={api_key} query param
 **Why:** UDP-based, binary protocol, even smaller than MQTT. Designed for 8-bit microcontrollers with less than 10KB of RAM.
 
 ```
-coap://coap.afridata.io/ingest
+coap://coap.ioteca.io/ingest
 Uri-Query: key={api_key}
 Payload: CBOR or JSON
 ```
@@ -909,7 +909,7 @@ When creating a project, users configure:
 | Name | String | Identifier shown in dashboard |
 | Description | String | Optional context |
 | Environment | `production` / `development` / `testing` | Affects display and potentially retention rules |
-| Region | `af-ke-1` (Nairobi) — more regions added as platform scales | Data residency |
+| Region | `af-ke-1` (Nairobi) â€” more regions added as platform scales | Data residency |
 | Timezone | e.g. `Africa/Nairobi` | Affects time bucketing in dashboard charts |
 | Expected device count | Integer | Informs quota planning; broker rejects beyond tier max |
 | Send interval | Seconds or `irregular` | Used to warn user if declared vs actual rate diverges |
@@ -951,7 +951,7 @@ EXPIRE project:{project_id}:msgs:{YYYY-MM-DD} 172800   -- 2 days TTL
 This is O(1), atomic, and adds zero latency to the ingestion path. The quota-service reads this counter and compares to the tier limit.
 
 **Notification triggers:**
-- At 80%: send warning email — "You've used 8,000 of your 10,000 daily messages. Consider upgrading."
+- At 80%: send warning email â€” "You've used 8,000 of your 10,000 daily messages. Consider upgrading."
 - At 100%: send exceeded email with upgrade link. New messages are rejected at the broker with a PUBACK reason code or HTTP 429.
 - After midnight: counter resets automatically (TTL expiry).
 
@@ -963,15 +963,15 @@ This is O(1), atomic, and adds zero latency to the ingestion path. The quota-ser
 
 Each project has a dashboard showing:
 
-- **Live status strip** — number of online devices right now (WebSocket-driven), messages in last 60 minutes, current message rate
-- **Time-series charts** (Apache ECharts) — plot any metric from any device over a user-selected time window (last 1h, 6h, 24h, 7d, 30d, custom). Data is served from the appropriate aggregate view depending on the time window:
-  - < 24h window → raw `sensor_data`
-  - 24h–7d window → `sensor_data_1min`
-  - 7d–30d window → `sensor_data_1hr`
-  - > 30d window → `sensor_data_1day`
-- **Device map** (Leaflet.js) — pins for each device with last-known coordinates. Pin color indicates device status: green (active, seen < 5 min ago), amber (stale, seen < 1h), red (offline, not seen > 1h)
-- **Device table** — sortable list of devices with: device_id, last seen, message count today, firmware version, assigned label
-- **Quota bar** — visual indicator of daily message usage vs limit
+- **Live status strip** â€” number of online devices right now (WebSocket-driven), messages in last 60 minutes, current message rate
+- **Time-series charts** (Apache ECharts) â€” plot any metric from any device over a user-selected time window (last 1h, 6h, 24h, 7d, 30d, custom). Data is served from the appropriate aggregate view depending on the time window:
+  - < 24h window â†’ raw `sensor_data`
+  - 24hâ€“7d window â†’ `sensor_data_1min`
+  - 7dâ€“30d window â†’ `sensor_data_1hr`
+  - > 30d window â†’ `sensor_data_1day`
+- **Device map** (Leaflet.js) â€” pins for each device with last-known coordinates. Pin color indicates device status: green (active, seen < 5 min ago), amber (stale, seen < 1h), red (offline, not seen > 1h)
+- **Device table** â€” sortable list of devices with: device_id, last seen, message count today, firmware version, assigned label
+- **Quota bar** â€” visual indicator of daily message usage vs limit
 
 ### API Key Management
 
@@ -981,7 +981,7 @@ Under each project: list of API keys with name, prefix (for identification), env
 
 ## 12. Admin Panel
 
-Accessible at `/admin` — only rendered for `ROLE_ADMIN` users. The admin frontend is a separate Vue.js route group served from the same SPA but conditionally shown.
+Accessible at `/admin` â€” only rendered for `ROLE_ADMIN` users. The admin frontend is a separate Vue.js route group served from the same SPA but conditionally shown.
 
 ### Platform Overview
 
@@ -1038,32 +1038,32 @@ Per-project drill-down:
 
 ```
 docker-compose.yml
-├── nginx              (reverse proxy, TLS, static frontend)
-├── frontend           (Vue.js built into Nginx image)
-├── auth-service       (Java Spring Boot, port 8081)
-├── ingestion-service  (Java Spring Boot, port 8082)
-├── alert-engine       (Java Spring Boot, port 8083)
-├── quota-service      (Java Spring Boot, port 8084)
-├── api-gateway        (Java Spring Boot, port 8080 — only port exposed externally via Nginx)
-├── notification-service (Java Spring Boot, port 8085)
-├── emqx               (EMQX broker, ports 1883, 8883, 8083/ws, 18083/dashboard)
-├── kafka              (Apache Kafka)
-├── zookeeper          (Kafka dependency — or use KRaft mode for Kafka 3.3+)
-├── timescaledb        (TimescaleDB, port 5432)
-├── redis              (Redis, port 6379)
-└── kafka-ui           (optional: Kafka management UI, dev only)
+â”œâ”€â”€ nginx              (reverse proxy, TLS, static frontend)
+â”œâ”€â”€ frontend           (Vue.js built into Nginx image)
+â”œâ”€â”€ auth-service       (Java Spring Boot, port 8081)
+â”œâ”€â”€ ingestion-service  (Java Spring Boot, port 8082)
+â”œâ”€â”€ alert-engine       (Java Spring Boot, port 8083)
+â”œâ”€â”€ quota-service      (Java Spring Boot, port 8084)
+â”œâ”€â”€ api-gateway        (Java Spring Boot, port 8080 â€” only port exposed externally via Nginx)
+â”œâ”€â”€ notification-service (Java Spring Boot, port 8085)
+â”œâ”€â”€ emqx               (EMQX broker, ports 1883, 8883, 8083/ws, 18083/dashboard)
+â”œâ”€â”€ kafka              (Apache Kafka)
+â”œâ”€â”€ zookeeper          (Kafka dependency â€” or use KRaft mode for Kafka 3.3+)
+â”œâ”€â”€ timescaledb        (TimescaleDB, port 5432)
+â”œâ”€â”€ redis              (Redis, port 6379)
+â””â”€â”€ kafka-ui           (optional: Kafka management UI, dev only)
 ```
 
 ### Network Design
 
-All services communicate on an internal Docker network `afridata-internal`. Only Nginx and EMQX expose ports to the host. No database or Kafka port is ever exposed externally.
+All services communicate on an internal Docker network `IoTeca-internal`. Only Nginx and EMQX expose ports to the host. No database or Kafka port is ever exposed externally.
 
 ```
 External internet
-  │
-  ├── :443 (HTTPS) → Nginx → api-gateway (:8080)
-  ├── :8883 (MQTT TLS) → EMQX
-  └── :443/ws → Nginx → EMQX WebSocket bridge
+  â”‚
+  â”œâ”€â”€ :443 (HTTPS) â†’ Nginx â†’ api-gateway (:8080)
+  â”œâ”€â”€ :8883 (MQTT TLS) â†’ EMQX
+  â””â”€â”€ :443/ws â†’ Nginx â†’ EMQX WebSocket bridge
 ```
 
 ---
@@ -1071,71 +1071,71 @@ External internet
 ## 14. Directory Structure
 
 ```
-afridata/
-├── docker-compose.yml
-├── docker-compose.dev.yml         # dev overrides (hot reload, exposed DB ports)
-├── .env.example
-├── README.md
-│
-├── services/
-│   ├── auth-service/
-│   │   ├── Dockerfile
-│   │   └── src/main/java/io/afridata/auth/
-│   ├── ingestion-service/
-│   │   ├── Dockerfile
-│   │   └── src/main/java/io/afridata/ingestion/
-│   ├── alert-engine/
-│   │   ├── Dockerfile
-│   │   └── src/main/java/io/afridata/alert/
-│   ├── quota-service/
-│   │   ├── Dockerfile
-│   │   └── src/main/java/io/afridata/quota/
-│   ├── api-gateway/
-│   │   ├── Dockerfile
-│   │   └── src/main/java/io/afridata/gateway/
-│   └── notification-service/
-│       ├── Dockerfile
-│       └── src/main/java/io/afridata/notification/
-│
-├── frontend/
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── package.json
-│   └── src/
-│       ├── main.js
-│       ├── router/
-│       ├── store/
-│       ├── views/
-│       │   ├── auth/
-│       │   ├── dashboard/
-│       │   ├── project/
-│       │   ├── admin/
-│       │   └── onboarding/
-│       └── components/
-│           ├── charts/
-│           ├── map/
-│           └── ui/
-│
-├── infra/
-│   ├── emqx/
-│   │   ├── emqx.conf
-│   │   └── acl.conf
-│   ├── kafka/
-│   │   └── server.properties
-│   ├── nginx/
-│   │   └── nginx.conf
-│   ├── postgres/
-│   │   ├── 01-init-schemas.sql
-│   │   ├── 02-platform-tables.sql
-│   │   └── 03-tsdata-tables.sql
-│   └── redis/
-│       └── redis.conf
-│
-└── scripts/
-    ├── seed-tiers.sql
-    ├── load-test.py               # Python: simulate N devices sending data
-    ├── migrate.sh                 # run database migrations
-    └── create-kafka-topics.sh
+IoTeca/
+â”œâ”€â”€ docker-compose.yml
+â”œâ”€â”€ docker-compose.dev.yml         # dev overrides (hot reload, exposed DB ports)
+â”œâ”€â”€ .env.example
+â”œâ”€â”€ README.md
+â”‚
+â”œâ”€â”€ services/
+â”‚   â”œâ”€â”€ auth-service/
+â”‚   â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â”‚   â””â”€â”€ src/main/java/io/ioteca/auth/
+â”‚   â”œâ”€â”€ ingestion-service/
+â”‚   â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â”‚   â””â”€â”€ src/main/java/io/ioteca/ingestion/
+â”‚   â”œâ”€â”€ alert-engine/
+â”‚   â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â”‚   â””â”€â”€ src/main/java/io/ioteca/alert/
+â”‚   â”œâ”€â”€ quota-service/
+â”‚   â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â”‚   â””â”€â”€ src/main/java/io/ioteca/quota/
+â”‚   â”œâ”€â”€ api-gateway/
+â”‚   â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â”‚   â””â”€â”€ src/main/java/io/ioteca/gateway/
+â”‚   â””â”€â”€ notification-service/
+â”‚       â”œâ”€â”€ Dockerfile
+â”‚       â””â”€â”€ src/main/java/io/ioteca/notification/
+â”‚
+â”œâ”€â”€ frontend/
+â”‚   â”œâ”€â”€ Dockerfile
+â”‚   â”œâ”€â”€ nginx.conf
+â”‚   â”œâ”€â”€ package.json
+â”‚   â””â”€â”€ src/
+â”‚       â”œâ”€â”€ main.js
+â”‚       â”œâ”€â”€ router/
+â”‚       â”œâ”€â”€ store/
+â”‚       â”œâ”€â”€ views/
+â”‚       â”‚   â”œâ”€â”€ auth/
+â”‚       â”‚   â”œâ”€â”€ dashboard/
+â”‚       â”‚   â”œâ”€â”€ project/
+â”‚       â”‚   â”œâ”€â”€ admin/
+â”‚       â”‚   â””â”€â”€ onboarding/
+â”‚       â””â”€â”€ components/
+â”‚           â”œâ”€â”€ charts/
+â”‚           â”œâ”€â”€ map/
+â”‚           â””â”€â”€ ui/
+â”‚
+â”œâ”€â”€ infra/
+â”‚   â”œâ”€â”€ emqx/
+â”‚   â”‚   â”œâ”€â”€ emqx.conf
+â”‚   â”‚   â””â”€â”€ acl.conf
+â”‚   â”œâ”€â”€ kafka/
+â”‚   â”‚   â””â”€â”€ server.properties
+â”‚   â”œâ”€â”€ nginx/
+â”‚   â”‚   â””â”€â”€ nginx.conf
+â”‚   â”œâ”€â”€ postgres/
+â”‚   â”‚   â”œâ”€â”€ 01-init-schemas.sql
+â”‚   â”‚   â”œâ”€â”€ 02-platform-tables.sql
+â”‚   â”‚   â””â”€â”€ 03-tsdata-tables.sql
+â”‚   â””â”€â”€ redis/
+â”‚       â””â”€â”€ redis.conf
+â”‚
+â””â”€â”€ scripts/
+    â”œâ”€â”€ seed-tiers.sql
+    â”œâ”€â”€ load-test.py               # Python: simulate N devices sending data
+    â”œâ”€â”€ migrate.sh                 # run database migrations
+    â””â”€â”€ create-kafka-topics.sh
 ```
 
 ---
@@ -1146,8 +1146,8 @@ afridata/
 # ---- Database ----
 DB_HOST=timescaledb
 DB_PORT=5432
-DB_NAME=afridata
-DB_USER=afridata_app
+DB_NAME=IoTeca
+DB_USER=IoTeca_app
 DB_PASSWORD=changeme
 
 # ---- Redis ----
@@ -1157,7 +1157,7 @@ REDIS_PASSWORD=changeme
 
 # ---- Kafka ----
 KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-KAFKA_CONSUMER_GROUP_ID=afridata-services
+KAFKA_CONSUMER_GROUP_ID=ioteca-services
 
 # ---- EMQX ----
 EMQX_API_URL=http://emqx:18083/api/v5
@@ -1172,14 +1172,14 @@ JWT_REFRESH_EXPIRY_DAYS=30
 # ---- Notification ----
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
-SMTP_USER=noreply@afridata.io
+SMTP_USER=noreply@ioteca.io
 SMTP_PASSWORD=changeme
 SMS_PROVIDER_API_KEY=changeme     # Africa's Talking or similar
 
 # ---- Platform ----
-PLATFORM_BASE_URL=https://afridata.io
+PLATFORM_BASE_URL=https://ioteca.io
 DEFAULT_REGION=af-ke-1
-API_KEY_PREFIX=afridata
+API_KEY_PREFIX=IoTeca
 ```
 
 ---
@@ -1196,8 +1196,8 @@ API_KEY_PREFIX=afridata
 ### Start all services
 
 ```bash
-git clone https://github.com/yourusername/afridata.git
-cd afridata
+git clone https://github.com/yourusername/IoTeca.git
+cd IoTeca
 cp .env.example .env
 # Edit .env with your local values
 
@@ -1238,7 +1238,7 @@ python scripts/load-test.py --devices 50 --interval 2 --project-id <your-project
 
 ## 17. Roadmap
 
-### Phase 1 — Core Platform (MVP)
+### Phase 1 â€” Core Platform (MVP)
 - [ ] User auth (register, login, JWT)
 - [ ] Project and API key management
 - [ ] EMQX broker with auth webhook
@@ -1247,7 +1247,7 @@ python scripts/load-test.py --devices 50 --interval 2 --project-id <your-project
 - [ ] Basic dashboard (time-series chart, device list)
 - [ ] Free tier quota enforcement
 
-### Phase 2 — Feature Complete
+### Phase 2 â€” Feature Complete
 - [ ] All four connection protocols (MQTT, HTTP, WebSocket, CoAP)
 - [ ] Device map (Leaflet.js)
 - [ ] Alert rules engine
@@ -1256,16 +1256,16 @@ python scripts/load-test.py --devices 50 --interval 2 --project-id <your-project
 - [ ] Admin panel (platform overview + per-project governance)
 - [ ] Data export (CSV download)
 
-### Phase 3 — Scale & Monetisation
+### Phase 3 â€” Scale & Monetisation
 - [ ] Payment integration (M-Pesa via Daraja API, card via Flutterwave)
 - [ ] Subscription tier management and upgrade flow
 - [ ] Continuous aggregate downsampling (retention policies)
-- [ ] Multi-region support (Nairobi → Lagos → Johannesburg)
+- [ ] Multi-region support (Nairobi â†’ Lagos â†’ Johannesburg)
 - [ ] EMQX cluster (multi-node)
 - [ ] Schema inference and auto-tagging
 - [ ] OTA metadata service
 
-### Phase 4 — Ecosystem
+### Phase 4 â€” Ecosystem
 - [ ] Official SDK: Python, JavaScript/Node.js, Arduino library
 - [ ] Grafana integration (expose a Grafana data source API)
 - [ ] Public device data sharing (opt-in)
@@ -1275,7 +1275,7 @@ python scripts/load-test.py --devices 50 --interval 2 --project-id <your-project
 
 ## Contributing
 
-This is an active development project. Before contributing, please read the architecture section carefully — understanding why each layer exists is more important than any single implementation detail.
+This is an active development project. Before contributing, please read the architecture section carefully â€” understanding why each layer exists is more important than any single implementation detail.
 
 Areas where contributions are especially welcome:
 - Python SDK for device simulation and testing
@@ -1287,7 +1287,7 @@ Areas where contributions are especially welcome:
 
 ## License
 
-MIT License — see `LICENSE` file.
+MIT License â€” see `LICENSE` file.
 
 ---
 

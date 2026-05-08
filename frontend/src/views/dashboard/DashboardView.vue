@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
 
-    <div v-if="!projectStore.current" class="empty-state">
+    <div v-if="!current" class="empty-state">
       <h2>No project selected</h2>
       <p>Create a project to get started.</p>
       <router-link to="/onboarding" class="btn-primary">Create project</router-link>
@@ -10,24 +10,19 @@
     <template v-else>
       <div class="page-header">
         <div>
-          <h1>{{ projectStore.current.name }}</h1>
-          <span class="badge">{{ projectStore.current.region }}</span>
-          <span class="badge" :class="projectStore.current.environment">
-            {{ projectStore.current.environment }}
-          </span>
+          <h1>{{ current.name }}</h1>
+          <span class="badge">{{ current.region }}</span>
+          <span class="badge" :class="current.environment">{{ current.environment }}</span>
         </div>
-        <div class="header-controls">
-          <select v-model="timeRange" @change="loadData">
-            <option value="1h">Last 1 hour</option>
-            <option value="6h">Last 6 hours</option>
-            <option value="24h">Last 24 hours</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-          </select>
-        </div>
+        <select v-model="timeRange" @change="loadData">
+          <option value="1h">Last 1 hour</option>
+          <option value="6h">Last 6 hours</option>
+          <option value="24h">Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
       </div>
 
-      <!-- Stats row -->
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-value">{{ devices.length }}</div>
@@ -47,12 +42,11 @@
         </div>
       </div>
 
-      <!-- Charts + controls -->
       <div class="section-header">
         <h2>Time-series data</h2>
         <div class="metric-controls">
           <select v-model="selectedMetric" @change="loadChartData">
-            <option value="">Select metric…</option>
+            <option value="">Select metric...</option>
             <option v-for="m in availableMetrics" :key="m" :value="m">{{ m }}</option>
           </select>
           <select v-model="selectedDevice" @change="loadChartData">
@@ -64,21 +58,16 @@
         </div>
       </div>
 
-      <div class="charts-grid">
-        <div class="card chart-card">
-          <TimeSeriesChart
-            :metric="selectedMetric || 'Select a metric above'"
-            :data="chartData"
-            :loading="chartLoading"
-            :unit="metricUnit"
-          />
-          <p v-if="!selectedMetric" class="chart-hint">
-            Select a metric from the dropdown above to view data.
-          </p>
-        </div>
+      <div class="card chart-card">
+        <TimeSeriesChart
+          :metric="selectedMetric || 'Select a metric above'"
+          :data="chartData"
+          :loading="chartLoading"
+          :unit="metricUnit"
+        />
+        <p v-if="!selectedMetric" class="chart-hint">Select a metric from the dropdown above to view data.</p>
       </div>
 
-      <!-- Device map -->
       <div class="section-header">
         <h2>Device locations</h2>
         <span class="hint">{{ devicesOnMap }} of {{ devices.length }} devices have GPS coordinates</span>
@@ -87,12 +76,9 @@
         <DeviceMap :devices="devices" />
       </div>
 
-      <!-- Device table -->
       <div class="section-header">
         <h2>Devices</h2>
-        <router-link :to="`/projects/${projectStore.current.id}`" class="link-btn">
-          Manage →
-        </router-link>
+        <router-link :to="'/projects/' + current.id" class="link-btn">Manage &rarr;</router-link>
       </div>
       <div class="card">
         <table class="device-table">
@@ -111,8 +97,8 @@
             </tr>
             <tr v-for="d in devices" :key="d.id">
               <td class="mono">{{ d.deviceId }}</td>
-              <td>{{ d.name || '—' }}</td>
-              <td>{{ d.locationLabel || '—' }}</td>
+              <td>{{ d.name || '-' }}</td>
+              <td>{{ d.locationLabel || '-' }}</td>
               <td>{{ d.lastSeenAt ? formatTime(d.lastSeenAt) : 'Never' }}</td>
               <td>
                 <span class="status-dot" :class="isOnline(d.lastSeenAt) ? 'online' : 'offline'"></span>
@@ -126,98 +112,150 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+<script>
+import { mapState, mapActions } from 'pinia'
 import { useProjectStore } from '../../store/project.js'
 import api from '../../api/client.js'
 import TimeSeriesChart from '../../components/charts/TimeSeriesChart.vue'
 import DeviceMap from '../../components/map/DeviceMap.vue'
 
-const projectStore = useProjectStore()
-
-const devices = ref([])
-const alertRules = ref([])
-const availableMetrics = ref([])
-const chartData = ref([])
-const chartLoading = ref(false)
-const timeRange = ref('24h')
-const selectedMetric = ref('')
-const selectedDevice = ref('')
-
-const devicesOnMap = computed(() => devices.value.filter(d => d.latitude && d.longitude).length)
-
-const UNITS = { temperature: '°C', humidity: '%', pressure: 'hPa', battery_v: 'V', lux: 'lx', soil_moisture: '%' }
-const metricUnit = computed(() => UNITS[selectedMetric.value] || '')
-
-function timeRangeToParams() {
-  const to = new Date()
-  const from = new Date(to)
-  const map = { '1h': 1, '6h': 6, '24h': 24, '7d': 168, '30d': 720 }
-  from.setHours(from.getHours() - (map[timeRange.value] || 24))
-  return { from: from.toISOString(), to: to.toISOString() }
+const UNITS = {
+  temperature: 'C', humidity: '%', pressure: 'hPa',
+  battery_v: 'V', lux: 'lx', soil_moisture: '%',
 }
 
-async function loadData() {
-  if (!projectStore.current) return
-  const id = projectStore.current.id
-  const [devRes, ruleRes, metricRes] = await Promise.allSettled([
-    api.get(`/api/v1/projects/${id}/devices`),
-    api.get(`/api/v1/projects/${id}/alert-rules`),
-    api.get(`/api/v1/projects/${id}/data/metrics`),
-  ])
-  if (devRes.status === 'fulfilled')    devices.value = devRes.value.data
-  if (ruleRes.status === 'fulfilled')   alertRules.value = ruleRes.value.data
-  if (metricRes.status === 'fulfilled') {
-    availableMetrics.value = metricRes.value.data
-    if (!selectedMetric.value && availableMetrics.value.length) {
-      selectedMetric.value = availableMetrics.value[0]
-      await loadChartData()
+export default {
+  name: 'DashboardView',
+  components: { TimeSeriesChart, DeviceMap },
+
+  data() {
+    return {
+      devices:          [],
+      alertRules:       [],
+      availableMetrics: [],
+      chartData:        [],
+      chartLoading:     false,
+      timeRange:        '24h',
+      selectedMetric:   '',
+      selectedDevice:   '',
     }
-  }
-}
+  },
 
-async function loadChartData() {
-  if (!selectedMetric.value || !projectStore.current) return
-  chartLoading.value = true
-  try {
-    const { from, to } = timeRangeToParams()
-    const params = { metric: selectedMetric.value, from, to }
-    if (selectedDevice.value) params.deviceId = selectedDevice.value
-    const { data } = await api.get(`/api/v1/projects/${projectStore.current.id}/data`, { params })
-    chartData.value = data.points
-  } catch {
-    chartData.value = []
-  } finally {
-    chartLoading.value = false
-  }
-}
+  computed: {
+    ...mapState(useProjectStore, ['current']),
 
-function isOnline(lastSeen) {
-  if (!lastSeen) return false
-  return Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000
-}
+    devicesOnMap() {
+      return this.devices.filter((d) => d.latitude && d.longitude).length
+    },
 
-function formatTime(iso) {
-  return new Date(iso).toLocaleString()
-}
+    metricUnit() {
+      return UNITS[this.selectedMetric] || ''
+    },
+  },
 
-onMounted(async () => {
-  if (projectStore.projects.length === 0) {
-    await projectStore.fetchProjects().catch(() => {})
-  }
-  await loadData()
-})
-watch(() => projectStore.current?.id, loadData)
+  watch: {
+    current(val) {
+      if (val) this.loadData()
+    },
+  },
+
+  async mounted() {
+    const projectStore = useProjectStore()
+    if (projectStore.projects.length === 0) {
+      await projectStore.fetchProjects().catch(() => {})
+    }
+    if (this.current) await this.loadData()
+  },
+
+  methods: {
+    ...mapActions(useProjectStore, ['fetchProjects']),
+
+    timeRangeToParams() {
+      const to   = new Date()
+      const from = new Date(to)
+      const hours = { '1h': 1, '6h': 6, '24h': 24, '7d': 168, '30d': 720 }
+      from.setHours(from.getHours() - (hours[this.timeRange] || 24))
+      return { from: from.toISOString(), to: to.toISOString() }
+    },
+
+    async loadData() {
+      if (!this.current) return
+      const id = this.current.id
+      const [devRes, ruleRes, metricRes] = await Promise.allSettled([
+        api.get(`/api/v1/projects/${id}/devices`),
+        api.get(`/api/v1/projects/${id}/alert-rules`),
+        api.get(`/api/v1/projects/${id}/data/metrics`),
+      ])
+      if (devRes.status    === 'fulfilled') this.devices          = devRes.value.data
+      if (ruleRes.status   === 'fulfilled') this.alertRules       = ruleRes.value.data
+      if (metricRes.status === 'fulfilled') {
+        this.availableMetrics = metricRes.value.data
+        if (!this.selectedMetric && this.availableMetrics.length) {
+          this.selectedMetric = this.availableMetrics[0]
+          await this.loadChartData()
+        }
+      }
+    },
+
+    async loadChartData() {
+      if (!this.selectedMetric || !this.current) return
+      this.chartLoading = true
+      try {
+        const { from, to } = this.timeRangeToParams()
+        const params = { metric: this.selectedMetric, from, to }
+        if (this.selectedDevice) params.deviceId = this.selectedDevice
+        const { data } = await api.get(`/api/v1/projects/${this.current.id}/data`, { params })
+        this.chartData = data.points
+      } catch {
+        this.chartData = []
+      } finally {
+        this.chartLoading = false
+      }
+    },
+
+    isOnline(lastSeen) {
+      if (!lastSeen) return false
+      return Date.now() - new Date(lastSeen).getTime() < 5 * 60 * 1000
+    },
+
+    formatTime(iso) {
+      return new Date(iso).toLocaleString()
+    },
+  },
+}
 </script>
 
 <style scoped>
 .dashboard { padding: 24px; max-width: 1400px; margin: 0 auto; }
 .empty-state { text-align: center; padding: 80px 20px; }
 .empty-state h2 { color: #333; margin-bottom: 8px; }
-.empty-state p { color: #888; margin-bottom: 24px; }
+.empty-state p  { color: #888; margin-bottom: 24px; }
+.btn-primary {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #1a73e8;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+}
 
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
 .page-header h1 { font-size: 1.5rem; color: #1a1a2e; margin-bottom: 8px; }
+.page-header select {
+  padding: 8px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  outline: none;
+  background: white;
+}
+
 .badge {
   display: inline-block;
   padding: 2px 10px;
@@ -228,18 +266,9 @@ watch(() => projectStore.current?.id, loadData)
   background: #e8f0fe;
   color: #1a73e8;
 }
-.badge.production { background: #e6f4ea; color: #137333; }
-.badge.staging { background: #fef7e0; color: #b06000; }
+.badge.production  { background: #e6f4ea; color: #137333; }
+.badge.staging     { background: #fef7e0; color: #b06000; }
 .badge.development { background: #fce8e6; color: #c5221f; }
-
-.header-controls select {
-  padding: 8px 12px;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  outline: none;
-  background: white;
-}
 
 .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
 .stat-card {
@@ -278,7 +307,6 @@ watch(() => projectStore.current?.id, loadData)
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
   margin-bottom: 16px;
 }
-.charts-grid { display: grid; gap: 16px; }
 .chart-hint { text-align: center; color: #aaa; font-size: 0.875rem; padding: 16px 0 8px; }
 
 .device-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
@@ -290,22 +318,11 @@ watch(() => projectStore.current?.id, loadData)
 
 .status-dot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 8px; height: 8px;
   border-radius: 50%;
   margin-right: 6px;
   vertical-align: middle;
 }
-.status-dot.online { background: #34a853; }
+.status-dot.online  { background: #34a853; }
 .status-dot.offline { background: #ccc; }
-
-.btn-primary {
-  display: inline-block;
-  padding: 12px 24px;
-  background: #1a73e8;
-  color: white;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 500;
-}
 </style>

@@ -2,8 +2,8 @@
   <div class="auth-page">
     <div class="auth-card">
       <div class="brand">
-        <span class="logo">▲</span>
-        <span>Afridata IoT Cloud</span>
+        <span class="logo">&#9650;</span>
+        <span>IoTeca</span>
       </div>
       <h2>Welcome back</h2>
       <form @submit.prevent="submit">
@@ -13,45 +13,51 @@
         </div>
         <div class="field">
           <label>Password</label>
-          <input v-model="password" type="password" placeholder="••••••••" required autocomplete="current-password" />
+          <input v-model="password" type="password" placeholder="Password" required autocomplete="current-password" />
         </div>
         <p v-if="error" class="error">{{ error }}</p>
-        <button type="submit" :disabled="loading">
-          {{ loading ? 'Signing in…' : 'Sign in' }}
-        </button>
+        <button type="submit" :disabled="loading">{{ loading ? 'Signing in...' : 'Sign in' }}</button>
       </form>
       <p class="switch">No account? <router-link to="/register">Create one</router-link></p>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+<script>
+import { mapActions } from 'pinia'
 import { useAuthStore } from '../../store/auth.js'
 import { useProjectStore } from '../../store/project.js'
 
-const auth = useAuthStore()
-const projectStore = useProjectStore()
-const router = useRouter()
+export default {
+  name: 'LoginView',
 
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const loading = ref(false)
+  data() {
+    return {
+      email: '',
+      password: '',
+      error: '',
+      loading: false,
+    }
+  },
 
-async function submit() {
-  error.value = ''
-  loading.value = true
-  try {
-    await auth.login(email.value, password.value)
-    const projects = await projectStore.fetchProjects()
-    router.push(projects.length === 0 ? '/onboarding' : '/dashboard')
-  } catch (e) {
-    error.value = e.response?.data?.message || 'Invalid email or password'
-  } finally {
-    loading.value = false
-  }
+  methods: {
+    ...mapActions(useAuthStore, ['login']),
+
+    async submit() {
+      this.error = ''
+      this.loading = true
+      try {
+        await this.login(this.email, this.password)
+        const projectStore = useProjectStore()
+        const projects = await projectStore.fetchProjects()
+        this.$router.push(projects.length === 0 ? '/onboarding' : '/dashboard')
+      } catch (e) {
+        this.error = e.response?.data?.message || 'Invalid email or password'
+      } finally {
+        this.loading = false
+      }
+    },
+  },
 }
 </script>
 
@@ -77,7 +83,7 @@ async function submit() {
   gap: 8px;
   color: #1a73e8;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
   margin-bottom: 24px;
 }
 .logo { font-size: 1.4rem; }
