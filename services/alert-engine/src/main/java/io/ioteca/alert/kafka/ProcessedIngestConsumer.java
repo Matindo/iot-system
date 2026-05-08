@@ -1,4 +1,4 @@
-﻿package io.ioteca.alert.kafka;
+package io.ioteca.alert.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ioteca.alert.dto.ProcessedMessage;

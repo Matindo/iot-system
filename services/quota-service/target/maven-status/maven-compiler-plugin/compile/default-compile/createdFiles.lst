@@ -1,0 +1,9 @@
+io\ioteca\quota\kafka\RawIngestConsumer.class
+io\ioteca\quota\entity\UserSubscription.class
+io\ioteca\quota\entity\SubscriptionTier.class
+io\ioteca\quota\service\QuotaService.class
+io\ioteca\quota\QuotaServiceApplication.class
+io\ioteca\quota\repository\ProjectRepository.class
+io\ioteca\quota\service\QuotaService$QuotaStatus.class
+io\ioteca\quota\repository\UserSubscriptionRepository.class
+io\ioteca\quota\entity\Project.class

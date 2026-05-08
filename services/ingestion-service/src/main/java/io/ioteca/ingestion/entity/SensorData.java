@@ -1,4 +1,4 @@
-﻿package io.ioteca.ingestion.entity;
+package io.ioteca.ingestion.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

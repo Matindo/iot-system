@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.repository;
+package io.ioteca.gateway.repository;
 
 import io.ioteca.gateway.entity.ApiKey;
 import org.springframework.data.jpa.repository.JpaRepository;

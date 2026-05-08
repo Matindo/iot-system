@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.controller;
+package io.ioteca.gateway.controller;
 
 import io.ioteca.gateway.repository.ProjectRepository;
 import io.ioteca.gateway.service.JwtService;

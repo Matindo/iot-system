@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.repository;
+package io.ioteca.auth.repository;
 
 import io.ioteca.auth.entity.SubscriptionTier;
 import org.springframework.data.jpa.repository.JpaRepository;

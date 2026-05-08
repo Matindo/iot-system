@@ -1,4 +1,4 @@
-﻿package io.ioteca.ingestion.service;
+package io.ioteca.ingestion.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;

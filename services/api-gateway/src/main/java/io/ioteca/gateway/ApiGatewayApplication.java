@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway;
+package io.ioteca.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.dto;
+package io.ioteca.auth.dto;
 
 import io.ioteca.auth.entity.ApiKey;
 

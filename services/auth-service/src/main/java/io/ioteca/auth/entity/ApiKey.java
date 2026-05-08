@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.entity;
+package io.ioteca.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

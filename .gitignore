@@ -1,0 +1,56 @@
+# ─── Java / Maven ─────────────────────────────────────────────────────────────
+../target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# ─── Node / Vue / Vite ────────────────────────────────────────────────────────
+**/node_modules/
+**/dist/
+**/dist-ssr/
+*.local
+.cache/
+
+# ─── Environment & secrets ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+# Keep docker-compose.yml and infra configs tracked.
+# Ignore local overrides only.
+docker-compose.override.yml
+
+# ─── Logs & runtime ───────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── JaCoCo & test reports ────────────────────────────────────────────────────
+**/target/site/
+
+# ─── Claude Code internal ─────────────────────────────────────────────────────
+.claude/

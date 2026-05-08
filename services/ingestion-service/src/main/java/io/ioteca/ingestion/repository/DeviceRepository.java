@@ -1,4 +1,4 @@
-﻿package io.ioteca.ingestion.repository;
+package io.ioteca.ingestion.repository;
 
 import io.ioteca.ingestion.entity.Device;
 import org.springframework.data.jpa.repository.JpaRepository;

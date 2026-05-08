@@ -1,4 +1,4 @@
-﻿package io.ioteca.alert.entity;
+package io.ioteca.alert.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,4 +1,4 @@
-﻿package io.ioteca.notification.config;
+package io.ioteca.notification.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

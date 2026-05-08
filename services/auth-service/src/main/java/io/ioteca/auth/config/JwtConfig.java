@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.config;
+package io.ioteca.auth.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

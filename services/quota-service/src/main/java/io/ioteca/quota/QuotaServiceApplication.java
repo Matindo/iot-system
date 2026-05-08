@@ -1,4 +1,4 @@
-﻿package io.ioteca.quota;
+package io.ioteca.quota;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

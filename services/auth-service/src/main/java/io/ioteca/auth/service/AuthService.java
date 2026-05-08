@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.service;
+package io.ioteca.auth.service;
 
 import io.ioteca.auth.dto.AuthResponse;
 import io.ioteca.auth.dto.LoginRequest;

@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: io.ioteca.quota.service.QuotaServiceTest
+-------------------------------------------------------------------------------
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.687 s -- in io.ioteca.quota.service.QuotaServiceTest

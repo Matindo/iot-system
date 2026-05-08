@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.service;
+package io.ioteca.gateway.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

@@ -1,4 +1,4 @@
-﻿package io.ioteca.notification.kafka;
+package io.ioteca.notification.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ioteca.notification.entity.Project;

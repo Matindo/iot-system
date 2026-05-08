@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "name": "IoTeca IoT Platform â€” API Tests",
-    "description": "Complete API test suite covering authentication, project management, data ingestion, device management, and EMQX webhooks.\n\n**Run order:** Execute folders top-to-bottom. Variables are set automatically by test scripts.\n\n**Timeliness:** Every request asserts response time < 500 ms.\n\n**Auth:** Folder 1 (Auth) sets `access_token` and `refresh_token`. Folder 3 (API Keys) sets `api_key_full`. Ingest requests use the API key; all other protected requests use the JWT.",
+    "description": "Complete API test suite covering authentication, project management, data ingestion, device management, alert rules, data query, admin stats, and EMQX webhooks.\n\n**Run order:** Execute folders top-to-bottom. Variables are set automatically by test scripts.\n\n**Timeliness:** Every request asserts response time < 500 ms.\n\n**Auth:** Folder 1 (Auth) sets `access_token` and `refresh_token`. Folder 3 (API Keys) sets `api_key_full`. Ingest requests use the API key; all other protected requests use the JWT.\n\n**Async note:** Folders 5 (Devices), 7 (Data Query) depend on Kafka consumers having processed ingest messages. Allow a few seconds after running folder 4 before running these.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
 
@@ -17,7 +17,9 @@
     { "key": "project_id",       "value": "", "type": "string" },
     { "key": "api_key_id",       "value": "", "type": "string" },
     { "key": "api_key_full",     "value": "", "type": "string" },
-    { "key": "device_id",        "value": "sensor_ke_001", "type": "string" }
+    { "key": "device_id",        "value": "sensor_ke_001", "type": "string" },
+    { "key": "alert_rule_id",    "value": "", "type": "string" },
+    { "key": "metric_name",      "value": "temperature", "type": "string" }
   ],
 
   "item": [
@@ -384,7 +386,7 @@
                   "    const r = pm.response.json();",
                   "    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);",
                   "    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));",
-                  "    pm.expect(r.fullKey).to.be.a('string').and.match(/^IoTeca_live_[a-z0-9]{8}_[A-Za-z0-9_-]+$/);",
+                  "    pm.expect(r.fullKey).to.be.a('string').and.match(/^ioteca_live_[a-z0-9]{8}_[A-Za-z0-9_-]+$/);",
                   "    pm.expect(r.keyPrefix).to.have.lengthOf.at.most(20);",
                   "    pm.expect(r.environment).to.equal('live');",
                   "    pm.expect(r.scopes).to.include('ingest');",
@@ -756,7 +758,344 @@
     },
 
     {
-      "name": "6 â€” Security Tests",
+      “name”: “6 â€” Alert Rules (api-gateway :8080)”,
+      “description”: “Create and manage alert rules for a project. Run after folder 2 (Projects).”,
+      “item”: [
+
+        {
+          “name”: “Create alert rule â€” temperature high”,
+          “event”: [
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 201 Created', () => pm.response.to.have.status(201));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “pm.test('Alert rule schema is valid', () => {“,
+                  “    const r = pm.response.json();”,
+                  “    pm.expect(r.id).to.match(/^[0-9a-f-]{36}$/i);”,
+                  “    pm.expect(r.projectId).to.equal(pm.collectionVariables.get('project_id'));”,
+                  “    pm.expect(r.metricName).to.equal('temperature');”,
+                  “    pm.expect(r.condition).to.equal('gt');”,
+                  “    pm.expect(r.threshold).to.equal(35.0);”,
+                  “    pm.expect(r.isActive).to.be.true;”,
+                  “    pm.collectionVariables.set('alert_rule_id', r.id);”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “POST”,
+            “header”: [
+              { “key”: “Content-Type”,  “value”: “application/json” },
+              { “key”: “Authorization”, “value”: “Bearer {{access_token}}” }
+            ],
+            “body”: {
+              “mode”: “raw”,
+              “raw”: “{\n  \”name\”: \”High temperature alert\”,\n  \”metricName\”: \”temperature\”,\n  \”condition\”: \”gt\”,\n  \”threshold\”: 35.0,\n  \”notificationChannels\”: [\”email\”],\n  \”suppressionWindowS\”: 300\n}”,
+              “options”: { “raw”: { “language”: “json” } }
+            },
+            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”] }
+          }
+        },
+
+        {
+          “name”: “List alert rules”,
+          “event”: [
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “pm.test('Returns array with created rule', () => {“,
+                  “    const rules = pm.response.json();”,
+                  “    pm.expect(rules).to.be.an('array').with.lengthOf.at.least(1);”,
+                  “    const rule = rules.find(r => r.id === pm.collectionVariables.get('alert_rule_id'));”,
+                  “    pm.expect(rule).to.not.be.undefined;”,
+                  “    pm.expect(rule.isActive).to.be.true;”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “GET”,
+            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
+            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”] }
+          }
+        },
+
+        {
+          “name”: “Update alert rule â€” raise threshold”,
+          “event”: [
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “pm.test('Threshold updated', () => {“,
+                  “    const r = pm.response.json();”,
+                  “    pm.expect(r.threshold).to.equal(38.0);”,
+                  “    pm.expect(r.name).to.equal('High temperature alert â€” revised');”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “PUT”,
+            “header”: [
+              { “key”: “Content-Type”,  “value”: “application/json” },
+              { “key”: “Authorization”, “value”: “Bearer {{access_token}}” }
+            ],
+            “body”: {
+              “mode”: “raw”,
+              “raw”: “{\n  \”name\”: \”High temperature alert â€” revised\”,\n  \”metricName\”: \”temperature\”,\n  \”condition\”: \”gt\”,\n  \”threshold\”: 38.0,\n  \”notificationChannels\”: [\”email\”],\n  \”suppressionWindowS\”: 600\n}”,
+              “options”: { “raw”: { “language”: “json” } }
+            },
+            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”,”{{alert_rule_id}}”] }
+          }
+        },
+
+        {
+          “name”: “Delete (deactivate) alert rule”,
+          “event”: [
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 204 No Content', () => pm.response.to.have.status(204));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “pm.test('Response body is empty', () => {“,
+                  “    pm.expect(pm.response.text()).to.have.lengthOf(0);”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “DELETE”,
+            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
+            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/alert-rules/{{alert_rule_id}}”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”alert-rules”,”{{alert_rule_id}}”] }
+          }
+        }
+      ]
+    },
+
+    {
+      “name”: “7 â€” Data Query (api-gateway :8080)”,
+      “description”: “Query time-series sensor data. Run after folder 4 (Ingestion) and allow a few seconds for Kafka consumption.”,
+      “item”: [
+
+        {
+          “name”: “List available metrics”,
+          “event”: [
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “pm.test('Returns array of metric names', () => {“,
+                  “    const metrics = pm.response.json();”,
+                  “    pm.expect(metrics).to.be.an('array');”,
+                  “    if (metrics.length > 0) {“,
+                  “        pm.expect(metrics[0]).to.be.a('string');”,
+                  “        pm.collectionVariables.set('metric_name', metrics[0]);”,
+                  “        console.log('Available metrics:', metrics.join(', '));”,
+                  “    } else {“,
+                  “        console.warn('No metrics yet â€” re-run after ingest tests have been processed by Kafka');”,
+                  “    }”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “GET”,
+            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
+            “url”: { “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/data/metrics”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”data”,”metrics”] }
+          }
+        },
+
+        {
+          “name”: “Query time-series data â€” last 24 hours”,
+          “event”: [
+            {
+              “listen”: “prerequest”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “const to   = new Date();”,
+                  “const from = new Date(to.getTime() - 24 * 60 * 60 * 1000);”,
+                  “pm.variables.set('from_ts', from.toISOString());”,
+                  “pm.variables.set('to_ts',   to.toISOString());”
+                ]
+              }
+            },
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “pm.test('Response has points array', () => {“,
+                  “    const r = pm.response.json();”,
+                  “    pm.expect(r).to.have.property('points');”,
+                  “    pm.expect(r.points).to.be.an('array');”,
+                  “    if (r.points.length > 0) {“,
+                  “        const p = r.points[0];”,
+                  “        pm.expect(p).to.have.property('time');”,
+                  “        pm.expect(p).to.have.property('avg_value').that.is.a('number');”,
+                  “    }”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “GET”,
+            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
+            “url”: {
+              “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}”,
+              “host”: [“{{api_gateway_url}}”],
+              “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”data”],
+              “query”: [
+                { “key”: “metric”, “value”: “{{metric_name}}” },
+                { “key”: “from”,   “value”: “{{from_ts}}” },
+                { “key”: “to”,     “value”: “{{to_ts}}” }
+              ]
+            }
+          }
+        },
+
+        {
+          “name”: “Query time-series data â€” specific device”,
+          “event”: [
+            {
+              “listen”: “prerequest”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “const to   = new Date();”,
+                  “const from = new Date(to.getTime() - 6 * 60 * 60 * 1000);”,
+                  “pm.variables.set('from_ts', from.toISOString());”,
+                  “pm.variables.set('to_ts',   to.toISOString());”
+                ]
+              }
+            },
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “pm.test('Status is 200 OK', () => pm.response.to.have.status(200));”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “GET”,
+            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
+            “url”: {
+              “raw”: “{{api_gateway_url}}/api/v1/projects/{{project_id}}/data?metric={{metric_name}}&from={{from_ts}}&to={{to_ts}}&deviceId={{device_id}}”,
+              “host”: [“{{api_gateway_url}}”],
+              “path”: [“api”,”v1”,”projects”,”{{project_id}}”,”data”],
+              “query”: [
+                { “key”: “metric”,   “value”: “{{metric_name}}” },
+                { “key”: “from”,     “value”: “{{from_ts}}” },
+                { “key”: “to”,       “value”: “{{to_ts}}” },
+                { “key”: “deviceId”, “value”: “{{device_id}}” }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      “name”: “8 â€” Admin (api-gateway :8080)”,
+      “description”: “Admin-only endpoints. Requires a user with ROLE_ADMIN. These will return 403 for regular users.”,
+      “item”: [
+
+        {
+          “name”: “Get platform stats”,
+          “event”: [
+            {
+              “listen”: “test”,
+              “script”: {
+                “type”: “text/javascript”,
+                “exec”: [
+                  “// If the test user is not ROLE_ADMIN this will return 403 â€” that is expected.”,
+                  “pm.test('Status is 200 OK or 403 Forbidden', () => {“,
+                  “    pm.expect([200, 403]).to.include(pm.response.code);”,
+                  “});”,
+                  “”,
+                  “pm.test('Response time < 500ms', () => {“,
+                  “    pm.expect(pm.response.responseTime).to.be.below(500);”,
+                  “});”,
+                  “”,
+                  “if (pm.response.code === 200) {“,
+                  “    pm.test('Stats schema is valid', () => {“,
+                  “        const r = pm.response.json();”,
+                  “        pm.expect(r).to.include.all.keys('totalUsers','totalProjects','totalDevices','totalAlertRules','messagesLast24h');”,
+                  “        pm.expect(r.totalUsers).to.be.a('number').and.at.least(0);”,
+                  “        pm.expect(r.totalProjects).to.be.a('number').and.at.least(0);”,
+                  “        pm.expect(r.messagesLast24h).to.be.a('number').and.at.least(0);”,
+                  “    });”,
+                  “}”
+                ]
+              }
+            }
+          ],
+          “request”: {
+            “method”: “GET”,
+            “header”: [{ “key”: “Authorization”, “value”: “Bearer {{access_token}}” }],
+            “url”: { “raw”: “{{api_gateway_url}}/api/v1/admin/stats”, “host”: [“{{api_gateway_url}}”], “path”: [“api”,”v1”,”admin”,”stats”] }
+          }
+        }
+      ]
+    },
+
+    {
+      “name”: “9 â€” Security Tests”,
       "description": "Validates that protected resources correctly reject unauthenticated and unauthorized requests.",
       "item": [
 
@@ -892,7 +1231,7 @@
             "method": "POST",
             "header": [
               { "key": "Content-Type",  "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer IoTeca_live_00000000_fakekeythatdoesnotexist" }
+              { "key": "Authorization", "value": "Bearer ioteca_live_00000000_fakekeythatdoesnotexist" }
             ],
             "body": {
               "mode": "raw",
@@ -942,7 +1281,7 @@
     },
 
     {
-      "name": "7 â€” EMQX Webhooks (internal â€” auth-service :8081)",
+      “name”: “10 â€” EMQX Webhooks (internal â€” auth-service :8081)”,
       "description": "These endpoints are called by EMQX on every device connect/publish. They are on the internal network; use localhost in dev.",
       "item": [
 
@@ -1008,7 +1347,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"password\": \"IoTeca_live_badbadbad_thiskeyiscompletelyfake\",\n  \"clientid\": \"evil_device\",\n  \"peerhost\": \"1.2.3.4\",\n  \"proto_name\": \"MQTT\"\n}",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"password\": \"ioteca_live_badbadbad_thiskeyiscompletelyfake\",\n  \"clientid\": \"evil_device\",\n  \"peerhost\": \"1.2.3.4\",\n  \"proto_name\": \"MQTT\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{auth_service_url}}/api/internal/emqx/auth", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","auth"] }
@@ -1042,7 +1381,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"IoTeca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"ioteca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
@@ -1076,7 +1415,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"IoTeca/00000000-0000-0000-0000-999999999999/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"ioteca/00000000-0000-0000-0000-999999999999/{{device_id}}/environment\",\n  \"action\": \"publish\",\n  \"peerhost\": \"196.201.214.5\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
@@ -1110,7 +1449,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"IoTeca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"subscribe\",\n  \"peerhost\": \"196.201.214.5\"\n}",
+              "raw": "{\n  \"username\": \"{{project_id}}\",\n  \"clientid\": \"{{device_id}}\",\n  \"topic\": \"ioteca/{{project_id}}/{{device_id}}/environment\",\n  \"action\": \"subscribe\",\n  \"peerhost\": \"196.201.214.5\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{auth_service_url}}/api/internal/emqx/acl", "host": ["{{auth_service_url}}"], "path": ["api","internal","emqx","acl"] }
@@ -1120,7 +1459,7 @@
     },
 
     {
-      "name": "8 â€” Cleanup",
+      “name”: “11 â€” Cleanup”,
       "description": "Revoke the API key and soft-delete the project. Run last.",
       "item": [
 

@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.filter;
+package io.ioteca.auth.filter;
 
 import io.ioteca.auth.service.JwtService;
 import jakarta.servlet.FilterChain;

@@ -1,0 +1,3 @@
+io\ioteca\gateway\service\JwtServiceTest.class
+io\ioteca\gateway\service\RateLimitServiceTest.class
+io\ioteca\gateway\filter\ApiKeyAuthFilterTest.class

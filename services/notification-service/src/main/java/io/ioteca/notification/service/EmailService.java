@@ -1,4 +1,4 @@
-﻿package io.ioteca.notification.service;
+package io.ioteca.notification.service;
 
 import io.ioteca.notification.config.PlatformConfig;
 import io.ioteca.notification.entity.NotificationLog;

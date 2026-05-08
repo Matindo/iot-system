@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.entity;
+package io.ioteca.gateway.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

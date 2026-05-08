@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: io.ioteca.ingestion.service.IngestionServiceTest
+-------------------------------------------------------------------------------
+Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.845 s -- in io.ioteca.ingestion.service.IngestionServiceTest

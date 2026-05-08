@@ -1,0 +1,12 @@
+io\ioteca\ingestion\entity\Device$DeviceBuilder.class
+io\ioteca\ingestion\dto\ProcessedMessage.class
+io\ioteca\ingestion\entity\Device.class
+io\ioteca\ingestion\entity\SensorData.class
+io\ioteca\ingestion\IngestionServiceApplication.class
+io\ioteca\ingestion\repository\SensorDataRepository.class
+io\ioteca\ingestion\kafka\RawIngestConsumer.class
+io\ioteca\ingestion\dto\RawMessage.class
+io\ioteca\ingestion\repository\DeviceRepository.class
+io\ioteca\ingestion\service\IngestionService.class
+io\ioteca\ingestion\entity\SensorData$SensorDataBuilder.class
+io\ioteca\ingestion\entity\SensorDataId.class

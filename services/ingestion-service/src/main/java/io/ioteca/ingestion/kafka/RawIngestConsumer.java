@@ -1,4 +1,4 @@
-﻿package io.ioteca.ingestion.kafka;
+package io.ioteca.ingestion.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ioteca.ingestion.dto.ProcessedMessage;

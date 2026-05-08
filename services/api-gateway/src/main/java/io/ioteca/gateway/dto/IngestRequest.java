@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.dto;
+package io.ioteca.gateway.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;

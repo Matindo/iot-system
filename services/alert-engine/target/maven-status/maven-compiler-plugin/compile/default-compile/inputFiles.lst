@@ -1,0 +1,8 @@
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\AlertEngineApplication.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\kafka\ProcessedIngestConsumer.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\service\AlertEvaluator.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\dto\ProcessedMessage.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\config\AppConfig.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\repository\AlertRuleRepository.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\dto\AlertEvent.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\entity\AlertRule.java

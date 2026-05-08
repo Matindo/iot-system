@@ -1,4 +1,4 @@
-﻿package io.ioteca.ingestion.dto;
+package io.ioteca.ingestion.dto;
 
 import java.time.OffsetDateTime;
 import java.util.Map;

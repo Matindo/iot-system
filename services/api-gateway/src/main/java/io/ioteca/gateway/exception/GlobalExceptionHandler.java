@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.exception;
+package io.ioteca.gateway.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;

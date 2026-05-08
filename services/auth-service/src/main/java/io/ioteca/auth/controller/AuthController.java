@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.controller;
+package io.ioteca.auth.controller;
 
 import io.ioteca.auth.dto.*;
 import io.ioteca.auth.entity.User;

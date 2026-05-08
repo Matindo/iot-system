@@ -1,4 +1,4 @@
-﻿package io.ioteca.quota.service;
+package io.ioteca.quota.service;
 
 import io.ioteca.quota.entity.SubscriptionTier;
 import io.ioteca.quota.entity.UserSubscription;

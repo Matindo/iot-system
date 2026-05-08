@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.controller;
+package io.ioteca.auth.controller;
 
 import io.ioteca.auth.dto.EmqxAclRequest;
 import io.ioteca.auth.dto.EmqxAuthRequest;
@@ -49,7 +49,7 @@ public class EmqxWebhookController {
 
     /**
      * Called by EMQX to authorize a device to publish/subscribe on a topic.
-     * Topic format: IoTeca/{project_id}/{device_id}/{metric_group}
+     * Topic format: ioteca/{project_id}/{device_id}/{metric_group}
      * A device may only publish to its own project's topics.
      */
     @PostMapping("/acl")
@@ -59,7 +59,7 @@ public class EmqxWebhookController {
             return EmqxAuthResponse.DENY;
         }
 
-        // Topic must start with IoTeca/{project_id}/
+        // Topic must start with ioteca/{project_id}/
         String[] parts = req.topic().split("/");
         if (parts.length < 3 || !"ioteca".equals(parts[0])) {
             return EmqxAuthResponse.DENY;

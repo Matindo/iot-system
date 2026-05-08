@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.controller;
+package io.ioteca.auth.controller;
 
 import io.ioteca.auth.dto.ApiKeyCreateRequest;
 import io.ioteca.auth.dto.ApiKeyCreatedResponse;

@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.config;
+package io.ioteca.auth.config;
 
 import io.ioteca.auth.filter.JwtAuthenticationFilter;
 import io.ioteca.auth.service.UserDetailsServiceImpl;

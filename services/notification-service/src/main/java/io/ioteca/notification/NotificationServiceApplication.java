@@ -1,4 +1,4 @@
-﻿package io.ioteca.notification;
+package io.ioteca.notification;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

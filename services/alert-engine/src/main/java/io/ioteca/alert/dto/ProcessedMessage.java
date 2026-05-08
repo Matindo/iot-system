@@ -1,4 +1,4 @@
-﻿package io.ioteca.alert.dto;
+package io.ioteca.alert.dto;
 
 import java.time.OffsetDateTime;
 import java.util.Map;

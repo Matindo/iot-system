@@ -1,0 +1,14 @@
+io\ioteca\notification\repository\NotificationLogRepository.class
+io\ioteca\notification\config\PlatformConfig.class
+io\ioteca\notification\entity\NotificationLog.class
+io\ioteca\notification\service\WebhookService.class
+io\ioteca\notification\entity\NotificationLog$NotificationLogBuilder.class
+io\ioteca\notification\entity\Project.class
+io\ioteca\notification\service\EmailService.class
+io\ioteca\notification\entity\User.class
+io\ioteca\notification\kafka\AlertEventConsumer.class
+io\ioteca\notification\NotificationServiceApplication.class
+io\ioteca\notification\config\AppConfig.class
+io\ioteca\notification\repository\ProjectRepository.class
+io\ioteca\notification\kafka\QuotaEventConsumer.class
+io\ioteca\notification\repository\UserRepository.class

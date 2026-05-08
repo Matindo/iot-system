@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth;
+package io.ioteca.auth;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

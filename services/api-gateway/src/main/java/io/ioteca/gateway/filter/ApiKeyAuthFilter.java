@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.filter;
+package io.ioteca.gateway.filter;
 
 import io.ioteca.gateway.repository.ApiKeyRepository;
 import jakarta.servlet.FilterChain;

@@ -1,4 +1,4 @@
-﻿package io.ioteca.ingestion.dto;
+package io.ioteca.ingestion.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

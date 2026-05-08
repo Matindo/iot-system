@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.service;
+package io.ioteca.gateway.service;
 
 import io.ioteca.gateway.config.JwtConfig;
 import io.jsonwebtoken.Claims;

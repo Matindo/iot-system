@@ -1,4 +1,4 @@
-﻿package io.ioteca.alert.repository;
+package io.ioteca.alert.repository;
 
 import io.ioteca.alert.entity.AlertRule;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,0 +1,3 @@
+io\ioteca\auth\service\ApiKeyServiceTest.class
+io\ioteca\auth\service\JwtServiceTest.class
+io\ioteca\auth\service\AuthServiceTest.class

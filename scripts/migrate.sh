@@ -3,8 +3,8 @@ set -e
 
 DB_HOST="${DB_HOST:-localhost}"
 DB_PORT="${DB_PORT:-5432}"
-DB_NAME="${DB_NAME:-IoTeca}"
-DB_USER="${DB_USER:-IoTeca_app}"
+DB_NAME="${DB_NAME:-jhub-iot}"
+DB_USER="${DB_USER:-jhub-iot}"
 PSQL="psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME"
 
 echo "Running migrations against $DB_HOST:$DB_PORT/$DB_NAME ..."

@@ -1,0 +1,10 @@
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\entity\SensorData.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\dto\ProcessedMessage.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\kafka\RawIngestConsumer.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\repository\DeviceRepository.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\IngestionServiceApplication.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\entity\SensorDataId.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\repository\SensorDataRepository.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\dto\RawMessage.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\service\IngestionService.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\entity\Device.java

@@ -142,10 +142,10 @@ The platform is composed of the following independent microservices. Each runs i
 | Login | Verifies password against bcrypt hash, issues access + refresh JWT pair |
 | JWT issuance | HS256, signed with `JWT_SECRET`; access token 60 min, refresh token 30 days |
 | Token refresh | Validates refresh token `type` claim, issues new access token without re-login |
-| API key generation | Produces `IoTeca_{env}_{project_short_id}_{20char_secret}`, stores SHA-256 hash only |
+| API key generation | Produces `ioteca_{env}_{project_short_id}_{20char_secret}`, stores SHA-256 hash only |
 | API key revocation | Sets `is_active=false`, stamps `revoked_at`, records reason |
 | EMQX auth webhook | Validates API key hash + project ownership on every device connect attempt |
-| EMQX ACL webhook | Enforces topic-level publish rights: device may only publish to `IoTeca/{its_project_id}/#` |
+| EMQX ACL webhook | Enforces topic-level publish rights: device may only publish to `ioteca/{its_project_id}/#` |
 
 **REST Endpoints**
 
@@ -165,7 +165,7 @@ GET  /api/internal/emqx/key/validate?key={k} â€” key validation for other s
 **Key implementation details**
 
 - `JwtService` â€” issues and validates tokens locally; shared `JWT_SECRET` allows api-gateway to validate without calling auth-service on every request
-- `ApiKeyService` â€” API key format: `IoTeca_{live|test}_{8-char project id}_{20-char URL-safe base64 secret}`; first 20 chars stored as `key_prefix` for UI display, rest stored only as `SHA-256(full_key)`
+- `ApiKeyService` â€” API key format: `ioteca_{live|test}_{8-char project id}_{20-char URL-safe base64 secret}`; first 20 chars stored as `key_prefix` for UI display, rest stored only as `SHA-256(full_key)`
 - `JwtAuthenticationFilter` â€” extracts `Bearer` token per request, sets Spring Security context
 - Security: `/api/internal/**` and `/api/v1/auth/**` are permit-all at the filter chain; all other routes require a valid, non-refresh JWT
 
@@ -285,24 +285,33 @@ project:{uuid}:msgs:2025-08-15   â†’   atomic counter, TTL 2 days
 **REST Endpoints**
 
 ```
-POST /api/v1/ingest                         â€” single reading [JWT or API key]
-POST /api/v1/ingest/batch                   â€” up to 100 readings [JWT or API key]
-GET  /api/v1/projects                       â€” list user projects [JWT]
-POST /api/v1/projects                       â€” create project [JWT]
-GET  /api/v1/projects/{id}                  â€” get project [JWT]
-PUT  /api/v1/projects/{id}                  â€” update project [JWT]
-DELETE /api/v1/projects/{id}                â€” soft-delete project [JWT]
-GET  /api/v1/projects/{id}/devices          â€” list devices [JWT]
-GET  /api/v1/projects/{id}/devices/{did}    â€” get device [JWT]
-PATCH /api/v1/projects/{id}/devices/{did}   â€” update device metadata [JWT]
-GET  /api/v1/admin/**                       â€” admin endpoints [ROLE_ADMIN]
+POST /api/v1/ingest                                   â€” single reading [JWT or API key]
+POST /api/v1/ingest/batch                             â€” up to 100 readings [JWT or API key]
+GET  /api/v1/projects                                 â€” list user projects [JWT]
+POST /api/v1/projects                                 â€” create project [JWT]
+GET  /api/v1/projects/{id}                            â€” get project [JWT]
+PUT  /api/v1/projects/{id}                            â€” update project [JWT]
+DELETE /api/v1/projects/{id}                          â€” soft-delete project [JWT]
+GET  /api/v1/projects/{id}/devices                    â€” list devices [JWT]
+GET  /api/v1/projects/{id}/devices/{did}              â€” get device [JWT]
+PATCH /api/v1/projects/{id}/devices/{did}             â€” update device metadata [JWT]
+GET  /api/v1/projects/{id}/data                       â€” time-series query [JWT] (?metric=, ?from=, ?to=, ?deviceId=)
+GET  /api/v1/projects/{id}/data/metrics               â€” list available metrics [JWT] (?deviceId=)
+GET  /api/v1/projects/{id}/alert-rules                â€” list alert rules [JWT]
+POST /api/v1/projects/{id}/alert-rules                â€” create alert rule [JWT]
+PUT  /api/v1/projects/{id}/alert-rules/{ruleId}       â€” update alert rule [JWT]
+DELETE /api/v1/projects/{id}/alert-rules/{ruleId}     â€” deactivate alert rule [JWT]
+GET  /api/v1/admin/stats                              â€” platform statistics [ROLE_ADMIN]
 ```
 
 **Key implementation details**
 
 - `JwtAuthenticationFilter` mirrors the one in auth-service â€” same secret, same validation logic, no cross-service call
 - Project soft-delete sets `is_active=false` rather than deleting rows, preserving TimescaleDB data for the retention window
-- `IngestController` resolves project ID from the JWT subject (user â†’ project lookup) for HTTP ingestion; the Kafka message key is set to `project_id` so ingestion-service can correlate it
+- `ApiKeyAuthFilter` (@Order 1) detects `Bearer ioteca_` prefixed tokens, validates against auth-service, and sets `ROLE_DEVICE` plus a `apiKeyProjectId` request attribute; `JwtAuthenticationFilter` runs second and is a no-op if auth is already set
+- `IngestController.resolveProjectId()` checks the `apiKeyProjectId` request attribute first (API key path), then falls back to the `?projectId` query parameter (JWT path)
+- `DataQueryController` uses `JdbcTemplate` inside `@Transactional(readOnly=true)` to issue `SET LOCAL app.current_project_id = ‘...’` and then query the appropriate continuous aggregate view based on the requested time window: â‰¤24h â†’ raw `sensor_data`; 24hâ€”7d â†’ `sensor_data_1min`; 7dâ€”30d â†’ `sensor_data_1hr`; >30d â†’ `sensor_data_1day`
+- `AdminController` counts messages from `tsdata.project_quota_snapshots` (no RLS) rather than `tsdata.sensor_data` (RLS-protected)
 
 ---
 
@@ -339,12 +348,37 @@ GET  /api/v1/admin/**                       â€” admin endpoints [ROLE_ADMIN
 
 ### 4.7 `frontend` (Vue.js)
 
-Single-page application served by Nginx:
-- User authentication flows (login, register, password reset)
-- Project creation and management
-- Per-project dashboard with time-series charts and device status
-- Device registration and API key management
-- Admin panel (accessible only to `ROLE_ADMIN` users)
+Single-page application built with **Vite + Vue 3 (Options API)** and served by Nginx.
+
+**Tech:** Vue 3 Options API Â· Pinia (options-style stores) Â· Vue Router 4 Â· Axios Â· Apache ECharts Â· Leaflet.js
+
+**Views**
+
+| Route | View | Description |
+|---|---|---|
+| `/login` | `LoginView` | Email/password login; redirects on success |
+| `/register` | `RegisterView` | Account creation |
+| `/onboarding` | `OnboardingView` | First-project creation wizard |
+| `/dashboard` | `DashboardView` | Time-series chart, device map, device table, alert rule count |
+| `/projects/:id` | `ProjectView` | Tabbed: Settings / API Keys / Alert Rules / Devices |
+| `/admin` | `AdminView` | Platform stats (users, projects, devices, messages); ROLE_ADMIN only |
+
+**Components**
+
+| Component | Description |
+|---|---|
+| `NavBar` | Sidebar with project selector dropdown and admin link |
+| `TimeSeriesChart` | ECharts line chart with avg/min/max series, auto-resize, loading state |
+| `DeviceMap` | Leaflet map with device markers, popups showing device ID and last-seen time |
+
+**Stores (Pinia)**
+
+- `auth` â€" user, accessToken, isAuthenticated, isAdmin; login/register/logout actions with localStorage persistence
+- `project` â€" projects list, current project; fetchProjects/select/create/update/delete actions
+
+**Router guards:** `requiresAuth` (redirect to /login), `requiresAdmin` (redirect to /dashboard), `guest` (redirect to /dashboard if already logged in)
+
+**Dev proxy** (`vite.config.js`): `/api/v1/auth` and `/api/v1/keys` â†' `:8081`; all other `/api` â†' `:8080`
 
 ---
 
@@ -468,8 +502,8 @@ CREATE INDEX idx_projects_user ON platform.projects (user_id);
 
 -- ============================================================
 -- API KEYS
--- Structured format: IoTeca_{env}_{project_short_id}_{secret}
--- Example:           IoTeca_live_a3f9b2c1_k7x2m9q4r8v3n1p5
+-- Structured format: ioteca_{env}_{project_short_id}_{secret}
+-- Example:           ioteca_live_a3f9b2c1_k7x2m9q4r8v3n1p5
 -- Only the hash is stored; the full key is shown to the user once.
 -- ============================================================
 CREATE TABLE platform.api_keys (
@@ -750,7 +784,7 @@ tsdata.project_quota_snapshots  (project_id FK â†’ projects.id)
 ### Key Structure
 
 ```
-IoTeca_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
+ioteca_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
 â”‚         â”‚    â”‚           â”‚
 â”‚         â”‚    â”‚           â””â”€â”€ 20-char random secret (URL-safe base64)
 â”‚         â”‚    â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ 8-char project identifier (first 8 chars of project UUID)
@@ -760,7 +794,7 @@ IoTeca_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
 
 ### Why This Structure
 
-- The prefix `IoTeca_` allows GitHub's secret scanner and tools like TruffleHog to detect accidentally committed keys and alert the project owner automatically. You register the prefix pattern with these services.
+- The prefix `ioteca_` allows GitHub's secret scanner and tools like TruffleHog to detect accidentally committed keys and alert the project owner automatically. You register the prefix pattern with these services.
 - The embedded project short ID means the ingestion service can extract the project context directly from the key string without a database lookup â€” only a hash comparison is needed to verify the secret portion.
 - The environment segment prevents a test device from accidentally writing to a production project.
 - The full key is shown to the user **once only** at creation. After that, only `key_prefix` (first 20 chars) is stored in plaintext for UI display. The rest is stored as `SHA-256(full_key)`.
@@ -795,13 +829,13 @@ Device  â†’  EMQX Broker  â†’  Kafka (raw.ingest.af-ke-1)  â†’  i
 
 Devices publish to:
 ```
-IoTeca/{project_id}/{device_id}/{metric_group}
+ioteca/{project_id}/{device_id}/{metric_group}
 ```
 
 Examples:
 ```
-IoTeca/550e8400-e29b-41d4-a716/sensor_01/environment
-IoTeca/550e8400-e29b-41d4-a716/sensor_01/power
+ioteca/550e8400-e29b-41d4-a716/sensor_01/environment
+ioteca/550e8400-e29b-41d4-a716/sensor_01/power
 ```
 
 The broker validates the project_id in the topic matches the project embedded in the API key. A device cannot publish to another project's topic.
@@ -832,7 +866,7 @@ For devices that cannot maintain a persistent TCP connection:
 
 ```
 POST /api/v1/ingest
-Authorization: Bearer IoTeca_live_a3f9b2c1_...
+Authorization: Bearer ioteca_live_a3f9b2c1_...
 Content-Type: application/json
 
 { same payload as above }
@@ -861,7 +895,7 @@ Port:         1883 (plain) | 8883 (TLS â€” required for production)
 Username:     {project_id}
 Password:     {api_key}
 Client ID:    {device_id}  (must be unique per device per project)
-Topic:        IoTeca/{project_id}/{device_id}/{metric_group}
+Topic:        ioteca/{project_id}/{device_id}/{metric_group}
 QoS:          1 (at-least-once delivery â€” recommended)
 ```
 
@@ -1056,7 +1090,7 @@ docker-compose.yml
 
 ### Network Design
 
-All services communicate on an internal Docker network `IoTeca-internal`. Only Nginx and EMQX expose ports to the host. No database or Kafka port is ever exposed externally.
+All services communicate on an internal Docker network `jhub-iot`. Only Nginx and EMQX expose ports to the host. No database or Kafka port is ever exposed externally.
 
 ```
 External internet
@@ -1146,8 +1180,8 @@ IoTeca/
 # ---- Database ----
 DB_HOST=timescaledb
 DB_PORT=5432
-DB_NAME=IoTeca
-DB_USER=IoTeca_app
+DB_NAME=jhub-iot
+DB_USER=jhub-iot
 DB_PASSWORD=changeme
 
 # ---- Redis ----
@@ -1179,7 +1213,7 @@ SMS_PROVIDER_API_KEY=changeme     # Africa's Talking or similar
 # ---- Platform ----
 PLATFORM_BASE_URL=https://ioteca.io
 DEFAULT_REGION=af-ke-1
-API_KEY_PREFIX=IoTeca
+API_KEY_PREFIX=ioteca
 ```
 
 ---

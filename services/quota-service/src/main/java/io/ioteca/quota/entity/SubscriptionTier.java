@@ -1,4 +1,4 @@
-﻿package io.ioteca.quota.entity;
+package io.ioteca.quota.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,4 +1,4 @@
-﻿package io.ioteca.auth.exception;
+package io.ioteca.auth.exception;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;

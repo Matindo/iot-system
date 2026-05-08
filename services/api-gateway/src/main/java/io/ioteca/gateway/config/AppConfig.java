@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.config;
+package io.ioteca.gateway.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

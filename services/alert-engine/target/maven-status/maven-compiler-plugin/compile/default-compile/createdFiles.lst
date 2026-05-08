@@ -1,0 +1,9 @@
+io\ioteca\alert\kafka\ProcessedIngestConsumer.class
+io\ioteca\alert\dto\AlertEvent.class
+io\ioteca\alert\entity\AlertRule.class
+io\ioteca\alert\repository\AlertRuleRepository.class
+io\ioteca\alert\dto\ProcessedMessage.class
+io\ioteca\alert\entity\AlertRule$AlertRuleBuilder.class
+io\ioteca\alert\service\AlertEvaluator.class
+io\ioteca\alert\AlertEngineApplication.class
+io\ioteca\alert\config\AppConfig.class

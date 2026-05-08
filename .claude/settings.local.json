@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(mvn test *)",
+      "PowerShell(New-Item *)",
+      "PowerShell(cmd /c \"dir /a E:\\\\Work\\\\iot-system\")"
+    ]
+  }
+}

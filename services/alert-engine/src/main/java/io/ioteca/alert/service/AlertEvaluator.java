@@ -1,4 +1,4 @@
-﻿package io.ioteca.alert.service;
+package io.ioteca.alert.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ioteca.alert.dto.AlertEvent;

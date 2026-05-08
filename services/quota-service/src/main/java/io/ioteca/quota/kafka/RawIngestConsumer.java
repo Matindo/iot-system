@@ -1,4 +1,4 @@
-﻿package io.ioteca.quota.kafka;
+package io.ioteca.quota.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ioteca.quota.service.QuotaService;

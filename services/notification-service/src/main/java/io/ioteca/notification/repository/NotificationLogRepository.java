@@ -1,4 +1,4 @@
-﻿package io.ioteca.notification.repository;
+package io.ioteca.notification.repository;
 
 import io.ioteca.notification.entity.NotificationLog;
 import org.springframework.data.jpa.repository.JpaRepository;

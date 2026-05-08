@@ -1,4 +1,4 @@
-﻿package io.ioteca.quota.repository;
+package io.ioteca.quota.repository;
 
 import io.ioteca.quota.entity.UserSubscription;
 import org.springframework.data.jpa.repository.JpaRepository;

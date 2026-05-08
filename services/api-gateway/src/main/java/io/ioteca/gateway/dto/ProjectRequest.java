@@ -1,4 +1,4 @@
-﻿package io.ioteca.gateway.dto;
+package io.ioteca.gateway.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

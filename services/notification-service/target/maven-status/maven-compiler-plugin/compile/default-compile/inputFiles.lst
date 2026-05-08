@@ -1,0 +1,13 @@
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\config\AppConfig.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\kafka\QuotaEventConsumer.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\NotificationServiceApplication.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\repository\ProjectRepository.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\repository\UserRepository.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\repository\NotificationLogRepository.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\kafka\AlertEventConsumer.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\service\EmailService.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\service\WebhookService.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\entity\User.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\entity\Project.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\config\PlatformConfig.java
+E:\Work\iot-system\services\notification-service\src\main\java\io\ioteca\notification\entity\NotificationLog.java

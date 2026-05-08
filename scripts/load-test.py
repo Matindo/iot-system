@@ -23,7 +23,7 @@ def device_loop(device_id: str, project_id: str, api_key: str,
     client.username_pw_set(username=project_id, password=api_key)
     client.connect(broker, port)
     client.loop_start()
-    topic = f"IoTeca/{project_id}/{device_id}/environment"
+    topic = f"ioteca/{project_id}/{device_id}/environment"
 
     while True:
         payload = {
