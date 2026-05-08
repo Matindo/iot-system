@@ -101,7 +101,7 @@ The platform is built around the principle that IoT data is fundamentally differ
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-All services are containerized. Each box above is a separate Docker container, orchestrated via Docker Compose for development and Kubernetes for production.
+All services are containerized. Each box above is a separate Docker container, orchestrated via Docker Compose.
 
 ---
 
@@ -119,8 +119,7 @@ All services are containerized. Each box above is a separate Docker container, o
 | Frontend | Vue.js (Options API) | Reactive dashboard, familiar and stable API surface |
 | Charting | Apache ECharts | Handles large time-series datasets efficiently in browser |
 | Device Map | Leaflet.js | Open-source, lightweight, no API key required |
-| Containerization | Docker + Docker Compose | Dev parity, service isolation |
-| Orchestration | Kubernetes (production) | Horizontal scaling, rolling deploys, service discovery |
+| Containerization | Docker + Docker Compose | Dev parity, service isolation, production orchestration |
 | Reverse Proxy | Nginx | TLS termination, rate limiting at edge, static frontend serving |
 
 ---
@@ -908,15 +907,6 @@ External internet
   └── :443/ws → Nginx → EMQX WebSocket bridge
 ```
 
-### Kubernetes (Production)
-
-Each service becomes a Kubernetes `Deployment` with:
-- Horizontal Pod Autoscaler on the `ingestion-service` and `api-gateway` (the two high-traffic services)
-- `PersistentVolumeClaim` for TimescaleDB and Redis
-- `ConfigMap` for non-secret environment configuration
-- `Secret` for DB passwords, JWT signing keys, and API credentials
-- `Ingress` resource replacing Nginx (or keep Nginx as ingress controller)
-
 ---
 
 ## 14. Directory Structure
@@ -982,19 +972,11 @@ afridata/
 │   └── redis/
 │       └── redis.conf
 │
-├── scripts/
-│   ├── seed-tiers.sql
-│   ├── load-test.py               # Python: simulate N devices sending data
-│   ├── migrate.sh                 # run Flyway/Liquibase migrations
-│   └── create-kafka-topics.sh
-│
-└── k8s/                           # Kubernetes manifests (production)
-    ├── namespace.yaml
-    ├── deployments/
-    ├── services/
-    ├── configmaps/
-    ├── secrets/
-    └── ingress.yaml
+└── scripts/
+    ├── seed-tiers.sql
+    ├── load-test.py               # Python: simulate N devices sending data
+    ├── migrate.sh                 # run database migrations
+    └── create-kafka-topics.sh
 ```
 
 ---
@@ -1121,7 +1103,6 @@ python scripts/load-test.py --devices 50 --interval 2 --project-id <your-project
 - [ ] Continuous aggregate downsampling (retention policies)
 - [ ] Multi-region support (Nairobi → Lagos → Johannesburg)
 - [ ] EMQX cluster (multi-node)
-- [ ] Kubernetes production deployment
 - [ ] Schema inference and auto-tagging
 - [ ] OTA metadata service
 
