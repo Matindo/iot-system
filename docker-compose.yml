@@ -138,6 +138,17 @@ services:
         condition: service_healthy
     networks: [ioteca]
 
+  mqtt-bridge:
+    build: ./services/mqtt-bridge
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8090:8090"
+    networks: [ioteca]
+
   api-gateway:
     build: ./services/api-gateway
     restart: unless-stopped

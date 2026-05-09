@@ -1,6 +1,5 @@
 package io.ioteca.gateway.controller;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ioteca.gateway.dto.IngestRequest;
 import io.ioteca.gateway.filter.ApiKeyAuthFilter;
@@ -8,8 +7,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -30,9 +27,6 @@ public class IngestController {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
-
-    @Value("${emqx.internal-secret}")
-    private String emqxSecret;
 
     /**
      * Single reading ingest.
@@ -78,28 +72,6 @@ public class IngestController {
                 "total",    requests.size()
         ));
     }
-
-    /**
-     * EMQX webhook endpoint — called internally when a device publishes over MQTT.
-     * EMQX already authenticated the device; we verify the shared secret to confirm
-     * the request came from our broker, then reuse the same publish path.
-     */
-    @PostMapping("/mqtt")
-    public ResponseEntity<Void> ingestMqtt(
-            HttpServletRequest httpRequest,
-            @RequestBody MqttIngestBody body) {
-
-        if (!emqxSecret.equals(httpRequest.getHeader("X-EMQX-Secret"))) {
-            log.warn("Rejected MQTT ingest call with invalid secret from {}", httpRequest.getRemoteAddr());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-        publish(body.projectId(), body.payload());
-        return ResponseEntity.accepted().build();
-    }
-
-    private record MqttIngestBody(
-            @JsonProperty("project_id") UUID projectId,
-            IngestRequest payload) {}
 
     // ── helpers ──────────────────────────────────────────────────────────────
 

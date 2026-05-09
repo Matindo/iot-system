@@ -19,7 +19,8 @@
     { "key": "device_id",        "value": "sensor_ke_001", "type": "string" },
     { "key": "alert_rule_id",          "value": "", "type": "string" },
     { "key": "metric_name",            "value": "temperature", "type": "string" },
-    { "key": "emqx_internal_secret",   "value": "changeme-emqx-internal-secret", "type": "string" }
+    { "key": "emqx_internal_secret",   "value": "changeme-emqx-internal-secret", "type": "string" },
+    { "key": "mqtt_bridge_url",         "value": "http://localhost:8090", "type": "string" }
   ],
 
   "item": [
@@ -1342,7 +1343,7 @@
 
         {
           "name": "MQTT webhook bridge — ingest via EMQX rule engine (valid secret)",
-          "description": "Simulates the POST that EMQX's rule engine sends to api-gateway after a device publishes on ioteca/#. The api-gateway verifies the X-EMQX-Secret header before publishing to Kafka.",
+          "description": "Simulates the POST that EMQX's rule engine sends to mqtt-bridge after a device publishes on ioteca/#. The bridge verifies the X-EMQX-Secret header and publishes directly to Kafka.",
           "event": [
             {
               "listen": "test",
@@ -1367,13 +1368,13 @@
               "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"payload\": {\n    \"device_id\": \"{{device_id}}\",\n    \"timestamp\": null,\n    \"metrics\": {\n      \"temperature\": 26.1,\n      \"humidity\": 58.4\n    },\n    \"tags\": { \"source\": \"postman-mqtt-sim\" }\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{base_url}}/api/v1/ingest/mqtt", "host": ["{{base_url}}"], "path": ["api","v1","ingest","mqtt"] }
+            "url": { "raw": "{{mqtt_bridge_url}}/ingest", "host": ["{{mqtt_bridge_url}}"], "path": ["ingest"] }
           }
         },
 
         {
           "name": "MQTT webhook bridge — rejected with wrong secret",
-          "description": "Confirms that the api-gateway returns 401 when the X-EMQX-Secret header does not match EMQX_INTERNAL_SECRET.",
+          "description": "Confirms that mqtt-bridge returns 401 when the X-EMQX-Secret header does not match EMQX_INTERNAL_SECRET.",
           "event": [
             {
               "listen": "test",
@@ -1397,7 +1398,7 @@
               "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"payload\": {\n    \"device_id\": \"{{device_id}}\",\n    \"metrics\": { \"temperature\": 99.9 }\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
-            "url": { "raw": "{{base_url}}/api/v1/ingest/mqtt", "host": ["{{base_url}}"], "path": ["api","v1","ingest","mqtt"] }
+            "url": { "raw": "{{mqtt_bridge_url}}/ingest", "host": ["{{mqtt_bridge_url}}"], "path": ["ingest"] }
           }
         }
       ]

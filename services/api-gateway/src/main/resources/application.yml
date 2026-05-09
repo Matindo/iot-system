@@ -40,9 +40,6 @@ jwt:
 services:
   auth-service-url: ${AUTH_SERVICE_URL:http://auth-service:8081}
 
-emqx:
-  internal-secret: ${EMQX_INTERNAL_SECRET:changeme-dev-emqx-secret}
-
 management:
   endpoints:
     web:
