@@ -1,6 +1,3 @@
--- ============================================================
--- USERS
--- ============================================================
 CREATE TABLE platform.users (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email           TEXT NOT NULL UNIQUE,
@@ -15,13 +12,8 @@ CREATE TABLE platform.users (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_login_at   TIMESTAMPTZ
 );
-
 CREATE INDEX idx_users_email ON platform.users (email);
 
-
--- ============================================================
--- SUBSCRIPTION TIERS
--- ============================================================
 CREATE TABLE platform.subscription_tiers (
     id                       SERIAL PRIMARY KEY,
     name                     TEXT NOT NULL UNIQUE,
@@ -38,28 +30,29 @@ CREATE TABLE platform.subscription_tiers (
     created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+INSERT INTO platform.subscription_tiers
+    (name, max_messages_per_day, max_devices, max_projects, data_retention_days,
+     max_message_rate_per_sec, storage_limit_mb, api_calls_per_minute, price_kes_monthly, features)
+VALUES
+    ('FREE',         10000,    5,   2,   7,   10,    500,   60,   0,      '{"webhooks": false, "csv_export": true,  "downsampling": false}'),
+    ('STARTER',      100000,   25,  5,   30,  50,    5000,  300,  1500,   '{"webhooks": true,  "csv_export": true,  "downsampling": true}'),
+    ('PROFESSIONAL', 1000000,  100, 20,  90,  200,   50000, 1000, 6000,   '{"webhooks": true,  "csv_export": true,  "downsampling": true, "api_access": true}'),
+    ('ENTERPRISE',   -1,      -1,  -1,  -1,  -1,    -1,    -1,   0,      '{"webhooks": true,  "csv_export": true,  "downsampling": true, "api_access": true, "sla": true}')
+ON CONFLICT (name) DO NOTHING;
 
--- ============================================================
--- USER SUBSCRIPTIONS
--- ============================================================
 CREATE TABLE platform.user_subscriptions (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id     UUID NOT NULL REFERENCES platform.users(id) ON DELETE CASCADE,
-    tier_id     INTEGER NOT NULL REFERENCES platform.subscription_tiers(id),
-    status      TEXT NOT NULL DEFAULT 'ACTIVE',
-    started_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    expires_at  TIMESTAMPTZ,
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id      UUID NOT NULL REFERENCES platform.users(id) ON DELETE CASCADE,
+    tier_id      INTEGER NOT NULL REFERENCES platform.subscription_tiers(id),
+    status       TEXT NOT NULL DEFAULT 'ACTIVE',
+    started_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at   TIMESTAMPTZ,
     cancelled_at TIMESTAMPTZ,
-    payment_ref TEXT,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    payment_ref  TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE INDEX idx_subscriptions_user ON platform.user_subscriptions (user_id);
 
-
--- ============================================================
--- PROJECTS
--- ============================================================
 CREATE TABLE platform.projects (
     id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id                  UUID NOT NULL REFERENCES platform.users(id) ON DELETE CASCADE,
@@ -77,39 +70,28 @@ CREATE TABLE platform.projects (
     is_active                BOOLEAN NOT NULL DEFAULT TRUE,
     created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
     CONSTRAINT unique_project_name_per_user UNIQUE (user_id, name)
 );
-
 CREATE INDEX idx_projects_user ON platform.projects (user_id);
 
-
--- ============================================================
--- API KEYS
--- ============================================================
 CREATE TABLE platform.api_keys (
-    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id  UUID NOT NULL REFERENCES platform.projects(id) ON DELETE CASCADE,
-    name        TEXT NOT NULL,
-    key_prefix  TEXT NOT NULL,
-    key_hash    TEXT NOT NULL UNIQUE,
-    environment TEXT NOT NULL DEFAULT 'live',
-    scopes      TEXT[] NOT NULL DEFAULT '{ingest}',
-    last_used_at TIMESTAMPTZ,
-    expires_at  TIMESTAMPTZ,
-    is_active   BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    revoked_at  TIMESTAMPTZ,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id    UUID NOT NULL REFERENCES platform.projects(id) ON DELETE CASCADE,
+    name          TEXT NOT NULL,
+    key_prefix    TEXT NOT NULL,
+    key_hash      TEXT NOT NULL UNIQUE,
+    environment   TEXT NOT NULL DEFAULT 'live',
+    scopes        TEXT[] NOT NULL DEFAULT '{ingest}',
+    last_used_at  TIMESTAMPTZ,
+    expires_at    TIMESTAMPTZ,
+    is_active     BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    revoked_at    TIMESTAMPTZ,
     revoke_reason TEXT
 );
-
 CREATE INDEX idx_api_keys_project ON platform.api_keys (project_id);
 CREATE INDEX idx_api_keys_hash    ON platform.api_keys (key_hash);
 
-
--- ============================================================
--- DEVICES
--- ============================================================
 CREATE TABLE platform.devices (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id       UUID NOT NULL REFERENCES platform.projects(id) ON DELETE CASCADE,
@@ -127,40 +109,29 @@ CREATE TABLE platform.devices (
     last_ip          INET,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
     CONSTRAINT unique_device_per_project UNIQUE (project_id, device_id)
 );
-
 CREATE INDEX idx_devices_project   ON platform.devices (project_id);
 CREATE INDEX idx_devices_last_seen ON platform.devices (last_seen_at);
 
-
--- ============================================================
--- ALERT RULES
--- ============================================================
 CREATE TABLE platform.alert_rules (
-    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id           UUID NOT NULL REFERENCES platform.projects(id) ON DELETE CASCADE,
-    name                 TEXT NOT NULL,
-    description          TEXT,
-    metric_name          TEXT NOT NULL,
-    device_id            TEXT,
-    condition            TEXT NOT NULL,
-    threshold            DOUBLE PRECISION,
-    absence_window_s     INTEGER,
+    id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id            UUID NOT NULL REFERENCES platform.projects(id) ON DELETE CASCADE,
+    name                  TEXT NOT NULL,
+    description           TEXT,
+    metric_name           TEXT NOT NULL,
+    device_id             TEXT,
+    condition             TEXT NOT NULL,
+    threshold             DOUBLE PRECISION,
+    absence_window_s      INTEGER,
     notification_channels TEXT[] NOT NULL,
-    suppression_window_s INTEGER DEFAULT 300,
-    is_active            BOOLEAN NOT NULL DEFAULT TRUE,
-    last_fired_at        TIMESTAMPTZ,
-    created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    suppression_window_s  INTEGER DEFAULT 300,
+    is_active             BOOLEAN NOT NULL DEFAULT TRUE,
+    last_fired_at         TIMESTAMPTZ,
+    created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 CREATE INDEX idx_alert_rules_project ON platform.alert_rules (project_id);
 
-
--- ============================================================
--- NOTIFICATIONS LOG
--- ============================================================
 CREATE TABLE platform.notification_log (
     id         BIGSERIAL PRIMARY KEY,
     user_id    UUID NOT NULL REFERENCES platform.users(id),
@@ -173,13 +144,8 @@ CREATE TABLE platform.notification_log (
     delivered  BOOLEAN NOT NULL DEFAULT FALSE,
     error      TEXT
 );
-
 CREATE INDEX idx_notifications_user ON platform.notification_log (user_id, sent_at DESC);
 
-
--- ============================================================
--- ADMIN AUDIT LOG
--- ============================================================
 CREATE TABLE platform.admin_audit_log (
     id            BIGSERIAL PRIMARY KEY,
     admin_user_id UUID NOT NULL REFERENCES platform.users(id),

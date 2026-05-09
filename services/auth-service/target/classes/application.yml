@@ -11,6 +11,8 @@ spring:
     hikari:
       maximum-pool-size: 10
       minimum-idle: 2
+  flyway:
+    locations: classpath:db/migration
   jpa:
     hibernate:
       ddl-auto: validate

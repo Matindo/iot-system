@@ -10,6 +10,84 @@ volumes:
   kafka-data:
   emqx-data:
 
+configs:
+  emqx_conf:
+    content: |
+      node {
+        name = "emqx@127.0.0.1"
+        cookie = "IoTeca-emqx-cookie"
+        data_dir = "/opt/emqx/data"
+      }
+
+      cluster {
+        name = IoTeca
+        discovery_strategy = manual
+      }
+
+      listeners.tcp.default {
+        bind = "0.0.0.0:1883"
+        max_connections = 100000
+      }
+
+      listeners.ws.default {
+        bind = "0.0.0.0:8083"
+      }
+
+      authentication = [
+        {
+          mechanism = password_based
+          backend = http
+          method = post
+          url = "http://auth-service:8081/api/internal/emqx/auth"
+          headers { "Content-Type" = "application/json" }
+          body {
+            username = "$${username}"
+            password = "$${password}"
+            clientid = "$${clientid}"
+          }
+        }
+      ]
+
+      authorization {
+        no_match = deny
+        deny_action = disconnect
+        sources = [
+          {
+            type = http
+            enable = true
+            method = post
+            url = "http://auth-service:8081/api/internal/emqx/acl"
+            headers { "Content-Type" = "application/json" }
+            body {
+              username = "$${username}"
+              topic = "$${topic}"
+              action = "$${action}"
+            }
+          }
+        ]
+      }
+
+      bridges.webhook.ioteca_ingest {
+        enable = true
+        url = "http://mqtt-bridge:8090/ingest"
+        method = post
+        headers {
+          "content-type" = "application/json"
+          "x-emqx-secret" = "${EMQX_INTERNAL_SECRET}"
+        }
+        body = "$${.}"
+      }
+
+      rule_engine {
+        rules {
+          device_mqtt_ingest {
+            enable = true
+            sql = "SELECT username as project_id, json_decode(payload) as payload FROM \"ioteca/#\""
+            actions = ["webhook:ioteca_ingest"]
+          }
+        }
+      }
+
 services:
 
   # ── Infrastructure ──────────────────────────────────────────────
@@ -23,47 +101,58 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - timescaledb-data:/var/lib/postgresql/data
-      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     networks: [ioteca]
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server /usr/local/etc/redis/redis.conf
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --save 900 1
+      --save 300 10
+      --save 60 10000
     volumes:
       - redis-data:/data
-      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
     networks: [ioteca]
 
   kafka:
     image: apache/kafka:3.9.0
     restart: unless-stopped
-    entrypoint: ["/bin/bash", "/kafka-init.sh"]
     environment:
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092, EXTERNAL://kafka:9094
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-      KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_NODE_ID: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     volumes:
       - kafka-data:/var/lib/kafka/data
-      - ./infra/kafka/init.sh:/kafka-init.sh:ro
-      - ./scripts:/scripts:ro
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--describe", "--topic", "raw.ingest.af-ke-1"]
-      interval: 10s
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 15s
       timeout: 10s
-      retries: 15
+      retries: 10
       start_period: 30s
     networks: [ioteca]
 
@@ -80,7 +169,14 @@ services:
       EMQX_INTERNAL_SECRET: ${EMQX_INTERNAL_SECRET}
     volumes:
       - emqx-data:/opt/emqx/data
-      - ./infra/emqx/emqx.conf:/opt/emqx/etc/emqx.conf:ro
+    configs:
+      - source: emqx_conf
+        target: /opt/emqx/etc/emqx.conf
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      mqtt-bridge:
+        condition: service_started
     networks: [ioteca]
 
   # ── Backend Services ─────────────────────────────────────────────
@@ -89,7 +185,15 @@ services:
     build: ./services/auth-service
     restart: unless-stopped
     env_file: .env
-    depends_on: [timescaledb]
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
     networks: [ioteca]
 
   ingestion-service:
@@ -99,8 +203,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-      timescaledb:
-        condition: service_started
+      auth-service:
+        condition: service_healthy
     networks: [ioteca]
 
   alert-engine:
@@ -110,8 +214,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-      timescaledb:
-        condition: service_started
+      auth-service:
+        condition: service_healthy
     networks: [ioteca]
 
   quota-service:
@@ -121,8 +225,10 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     networks: [ioteca]
 
   notification-service:
@@ -131,6 +237,8 @@ services:
     env_file: .env
     depends_on:
       kafka:
+        condition: service_healthy
+      auth-service:
         condition: service_healthy
     networks: [ioteca]
 
@@ -153,11 +261,11 @@ services:
       kafka:
         condition: service_healthy
       auth-service:
-        condition: service_started
+        condition: service_healthy
       timescaledb:
-        condition: service_started
+        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "8080:8080"
     networks: [ioteca]
