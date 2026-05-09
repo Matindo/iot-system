@@ -1121,8 +1121,7 @@ docker-compose.yml
 ├── notification-service (Java Spring Boot, port 8085 — internal only)
 ├── mqtt-bridge          (Go binary, localhost:8090 — receives EMQX webhook, publishes to Kafka)
 ├── emqx                 (EMQX broker, ports 1883/8083ws exposed; 18083 dashboard on localhost only)
-├── kafka                (Apache Kafka — internal only)
-├── zookeeper            (Kafka dependency — internal only)
+├── kafka                (Apache Kafka KRaft — internal only, no ZooKeeper)
 ├── timescaledb          (TimescaleDB — internal only)
 └── redis                (Redis — internal only)
 ```
