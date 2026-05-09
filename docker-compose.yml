@@ -52,6 +52,7 @@ services:
     image: confluentinc/cp-kafka:7.6.0
     restart: unless-stopped
     depends_on: [zookeeper]
+    entrypoint: ["/bin/bash", "/kafka-init.sh"]
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -60,20 +61,29 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     volumes:
       - kafka-data:/var/lib/kafka/data
+      - ./infra/kafka/init.sh:/kafka-init.sh:ro
+      - ./scripts:/scripts:ro
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--describe", "--topic", "raw.ingest.af-ke-1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 30s
     networks: [ioteca]
 
   emqx:
     image: emqx/emqx:5.6.0
     restart: unless-stopped
+    user: root
     ports:
       - "1883:1883"
-      - "8883:8883"
       - "8083:8083"
       - "127.0.0.1:18083:18083"
     environment:
       EMQX_NODE__NAME: emqx@127.0.0.1
+      EMQX_INTERNAL_SECRET: ${EMQX_INTERNAL_SECRET}
     volumes:
-      - emqx-data:/var/lib/emqx
+      - emqx-data:/opt/emqx/data
       - ./infra/emqx/emqx.conf:/opt/emqx/etc/emqx.conf:ro
     networks: [ioteca]
 
@@ -90,35 +100,57 @@ services:
     build: ./services/ingestion-service
     restart: unless-stopped
     env_file: .env
-    depends_on: [kafka, timescaledb]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      timescaledb:
+        condition: service_started
     networks: [ioteca]
 
   alert-engine:
     build: ./services/alert-engine
     restart: unless-stopped
     env_file: .env
-    depends_on: [kafka, timescaledb]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      timescaledb:
+        condition: service_started
     networks: [ioteca]
 
   quota-service:
     build: ./services/quota-service
     restart: unless-stopped
     env_file: .env
-    depends_on: [kafka, redis]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_started
     networks: [ioteca]
 
   notification-service:
     build: ./services/notification-service
     restart: unless-stopped
     env_file: .env
-    depends_on: [kafka]
+    depends_on:
+      kafka:
+        condition: service_healthy
     networks: [ioteca]
 
   api-gateway:
     build: ./services/api-gateway
     restart: unless-stopped
     env_file: .env
-    depends_on: [auth-service, timescaledb, redis]
+    depends_on:
+      kafka:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      timescaledb:
+        condition: service_started
+      redis:
+        condition: service_started
     ports:
       - "8080:8080"
     networks: [ioteca]

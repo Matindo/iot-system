@@ -17,8 +17,9 @@
     { "key": "api_key_id",       "value": "", "type": "string" },
     { "key": "api_key_full",     "value": "", "type": "string" },
     { "key": "device_id",        "value": "sensor_ke_001", "type": "string" },
-    { "key": "alert_rule_id",    "value": "", "type": "string" },
-    { "key": "metric_name",      "value": "temperature", "type": "string" }
+    { "key": "alert_rule_id",          "value": "", "type": "string" },
+    { "key": "metric_name",            "value": "temperature", "type": "string" },
+    { "key": "emqx_internal_secret",   "value": "changeme-emqx-internal-secret", "type": "string" }
   ],
 
   "item": [
@@ -1336,6 +1337,67 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{base_url}}/api/internal/emqx/acl", "host": ["{{base_url}}"], "path": ["api","internal","emqx","acl"] }
+          }
+        },
+
+        {
+          "name": "MQTT webhook bridge — ingest via EMQX rule engine (valid secret)",
+          "description": "Simulates the POST that EMQX's rule engine sends to api-gateway after a device publishes on ioteca/#. The api-gateway verifies the X-EMQX-Secret header before publishing to Kafka.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 202 Accepted', () => pm.response.to.have.status(202));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));",
+                  "pm.test('Response body is empty', () => pm.expect(pm.response.text()).to.have.lengthOf(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "X-EMQX-Secret", "value": "{{emqx_internal_secret}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"payload\": {\n    \"device_id\": \"{{device_id}}\",\n    \"timestamp\": null,\n    \"metrics\": {\n      \"temperature\": 26.1,\n      \"humidity\": 58.4\n    },\n    \"tags\": { \"source\": \"postman-mqtt-sim\" }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/ingest/mqtt", "host": ["{{base_url}}"], "path": ["api","v1","ingest","mqtt"] }
+          }
+        },
+
+        {
+          "name": "MQTT webhook bridge — rejected with wrong secret",
+          "description": "Confirms that the api-gateway returns 401 when the X-EMQX-Secret header does not match EMQX_INTERNAL_SECRET.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', () => pm.response.to.have.status(401));",
+                  "pm.test('Response time < 500ms', () => pm.expect(pm.response.responseTime).to.be.below(500));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",   "value": "application/json" },
+              { "key": "X-EMQX-Secret", "value": "this-is-the-wrong-secret" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"project_id\": \"{{project_id}}\",\n  \"payload\": {\n    \"device_id\": \"{{device_id}}\",\n    \"metrics\": { \"temperature\": 99.9 }\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/v1/ingest/mqtt", "host": ["{{base_url}}"], "path": ["api","v1","ingest","mqtt"] }
           }
         }
       ]

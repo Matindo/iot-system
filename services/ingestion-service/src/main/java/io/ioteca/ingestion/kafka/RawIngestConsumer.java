@@ -37,7 +37,7 @@ public class RawIngestConsumer {
             // project_id is embedded in the Kafka message key (set by api-gateway / EMQX bridge)
             UUID projectId = resolveProjectId(record, msg);
             if (projectId == null) {
-                log.warn(“Dropping message — no project_id resolvable. key={}”, record.key());
+                log.warn("Dropping message — no project_id resolvable. key={}", record.key());
                 ack.acknowledge();
                 return;
             }
@@ -49,7 +49,7 @@ public class RawIngestConsumer {
 
             ack.acknowledge();
         } catch (IllegalArgumentException e) {
-            log.warn(“Invalid message dropped: {} — {}”, record.key(), e.getMessage());
+            log.warn("Invalid message dropped: {} — {}", record.key(), e.getMessage());
             ack.acknowledge(); // don't retry bad messages
         } catch (Exception e) {
             log.error("Failed to ingest message key={}: {}", record.key(), e.getMessage(), e);

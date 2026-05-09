@@ -56,49 +56,41 @@ The platform is built around the principle that IoT data is fundamentally differ
 ## 2. System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         DEVICE LAYER                                │
-│         MQTT · HTTP REST · WebSocket · CoAP · SDK (Python/JS)       │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │ API Key in connection credentials
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                    EMQX BROKER (self-hosted)                         │
-│    Auth webhook → Java Auth Service · Topic routing · TLS           │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │ validated messages
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                   APACHE KAFKA (message queue)                       │
-│        topic: raw.ingest.{region} · backpressure buffer             │
-└────────┬──────────────────┬───────────────────────┬─────────────────┘
-         │                  │                       │
-         ▼                  ▼                       ▼
-  ┌─────────────┐   ┌──────────────┐   ┌─────────────────────┐
-  │  Ingestion  │   │ Alert Engine │   │   Quota Counter     │
-  │   Service   │   │    Service   │   │      Service        │
-  │   (Java)    │   │    (Java)    │   │   (Java + Redis)    │
-  └──────┬──────┘   └──────┬───────┘   └─────────┬───────────┘
-         │                  │                     │
-         ▼                  ▼                     ▼
-  ┌─────────────┐   ┌──────────────┐   ┌─────────────────────┐
-  │TimescaleDB  │   │  PostgreSQL  │   │       Redis         │
-  │ (sensor     │   │  (relational │   │  (rate limits,      │
-  │  hypertable)│   │   metadata)  │   │   counters, cache)  │
-  └──────┬──────┘   └──────┬───────┘   └─────────┬───────────┘
-         └──────────────────┴─────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│              API GATEWAY  (Java Spring Boot)                         │
-│  /ingest · /query · /projects · /devices · /auth · /admin · /keys   │
-└──────────────────────────┬──────────────────────────────────────────┘
-                           │
-                           ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                 FRONTEND (Vue.js · Options API)                      │
-│     Dashboard · Device Map · Project Manager · Admin Panel          │
-└─────────────────────────────────────────────────────────────────────┘
+  MQTT devices                          HTTP / browser clients
+  (ESP32, Arduino, etc.)                (scripts, SDK, frontend)
+       │                                        │
+       │ username=project_id                    │ Bearer API key / JWT
+       │ password=API key                       │
+       ▼                                        ▼
+┌─────────────────────┐           ┌─────────────────────────────────────┐
+│   EMQX BROKER       │           │       API GATEWAY  (:8080)          │
+│   port 1883/8083    │           │  JWT · API key auth · rate limiting │
+│                     │  webhook  │  /ingest · /query · /projects       │
+│  auth webhook  ─────┼──────────▶│  /devices · /auth · /admin · /keys  │
+│  → auth-service     │           │                                     │
+│  ACL webhook   ─────┼──────────▶│  POST /api/v1/ingest/mqtt  ◀───────┤
+│  → auth-service     │  MQTT     │        (EMQX webhook bridge)        │
+│  rule engine   ─────┘  ingest   └──────────────┬────────────────────┘
+└─────────────────────┘                          │ Kafka publish
+                                                 ▼
+                           ┌─────────────────────────────────────────────┐
+                           │           APACHE KAFKA                      │
+                           │  raw.ingest.af-ke-1  ·  processed.ingest.* │
+                           │  alert.events  ·  quota.events              │
+                           └──────┬───────────────┬───────────┬──────────┘
+                                  │               │           │
+                      ┌───────────┘     ┌─────────┘           └────────┐
+                      ▼                 ▼                               ▼
+               ┌────────────┐   ┌──────────────┐           ┌──────────────────┐
+               │ ingestion  │   │ alert-engine │           │  quota-service   │
+               │  service   │   │              │           │  (+ Redis)       │
+               └─────┬──────┘   └──────┬───────┘           └────────┬─────────┘
+                     │                 │ alert.events                │ quota.events
+                     ▼                 ▼                             ▼
+              TimescaleDB        alert_rules            ┌─────────────────────────┐
+              sensor_data        (PostgreSQL)           │   notification-service  │
+              (hypertable)                              │   email · webhook       │
+                                                        └─────────────────────────┘
 ```
 
 All services are containerized. Each box above is a separate Docker container, orchestrated via Docker Compose.
@@ -109,7 +101,7 @@ All services are containerized. Each box above is a separate Docker container, o
 
 | Layer | Technology | Reason |
 |---|---|---|
-| MQTT Broker | EMQX (self-hosted, open-source) | Clusterable, high-connection-count, built-in auth webhook, Kafka bridge |
+| MQTT Broker | EMQX (self-hosted, open-source) | Clusterable, high-connection-count, built-in auth webhook, webhook bridge to api-gateway |
 | Message Queue | Apache Kafka | Durable log, replay capability, decouples ingest from storage speed |
 | Time-series DB | TimescaleDB (PostgreSQL extension) | SQL interface, hypertables, continuous aggregates, single DB for relational + time-series |
 | Relational DB | PostgreSQL (via TimescaleDB instance) | Users, projects, API keys, billing, device registry |
@@ -201,7 +193,7 @@ Kafka raw.ingest.af-ke-1
 
 - `SensorData` entity uses a composite `@IdClass` of `(time, projectId, deviceId, metric)` matching the hypertable's natural key
 - `insertRaw()` uses a native SQL upsert with `ON CONFLICT DO NOTHING` to safely handle duplicate delivery
-- Project ID is resolved from: (1) `project_id` field in the JSON body (set by api-gateway for HTTP ingestion), or (2) the Kafka message key (set by the EMQX-Kafka bridge for MQTT ingestion)
+- Project ID is resolved from: (1) `project_id` field in the JSON body (set by api-gateway for HTTP ingestion, or extracted from the MQTT username by the EMQX rule engine for MQTT ingestion)
 
 ---
 
@@ -287,6 +279,7 @@ project:{uuid}:msgs:2025-08-15   →   atomic counter, TTL 2 days
 ```
 POST /api/v1/ingest                                   — single reading [JWT or API key]
 POST /api/v1/ingest/batch                             — up to 100 readings [JWT or API key]
+POST /api/v1/ingest/mqtt                              — EMQX webhook bridge (X-EMQX-Secret header, internal use only)
 GET  /api/v1/projects                                 — list user projects [JWT]
 POST /api/v1/projects                                 — create project [JWT]
 GET  /api/v1/projects/{id}                            — get project [JWT]
@@ -822,11 +815,18 @@ ioteca_live_a3f9b2c1_k7x2m9q4r8v3n1p5w6y0
 
 ### Flow
 
+**MQTT path**
 ```
-Device  →  EMQX Broker  →  Kafka (raw.ingest.af-ke-1)  →  ingestion-service  →  TimescaleDB
-                │
-                └── Auth webhook → auth-service
-                    (called on connect, validates API key, checks quota)
+Device  →  EMQX Broker  →  rule engine webhook  →  api-gateway (/ingest/mqtt)
+                │                                        │
+                └── Auth webhook → auth-service          └── Kafka (raw.ingest.af-ke-1)
+                    (on connect, validates API key)                │
+                                                         ingestion-service → TimescaleDB
+```
+
+**HTTP path**
+```
+Device  →  api-gateway (/ingest or /ingest/batch)  →  Kafka (raw.ingest.af-ke-1)  →  ingestion-service  →  TimescaleDB
 ```
 
 ### MQTT Topic Convention
@@ -895,7 +895,7 @@ The platform supports all four major IoT connection protocols. The choice is ent
 
 ```
 Broker host:  your-host (EMQX)
-Port:         1883 (plain) | 8883 (TLS) | 8083 (WebSocket, path /mqtt)
+Port:         1883 (plain) | 8083 (WebSocket, path /mqtt)
 Username:     {project_id}        ← the full UUID of your project
 Password:     {api_key}           ← the full API key (ioteca_live_...)
 Client ID:    {device_id}         ← any unique string per device
@@ -903,7 +903,7 @@ Topic:        ioteca/{project_id}/{device_id}/{metric_group}
 QoS:          1 (at-least-once — recommended)
 ```
 
-**Payload** (same JSON schema as HTTP ingest — `project_id` can be omitted, it is resolved from the Kafka message key set by the EMQX bridge):
+**Payload** (same JSON schema as HTTP ingest — `project_id` is resolved from the MQTT username by the EMQX rule engine and does not need to be in the payload):
 
 ```json
 {
@@ -917,7 +917,7 @@ QoS:          1 (at-least-once — recommended)
 }
 ```
 
-**How it works:** EMQX validates the API key on connect via a webhook to auth-service, enforces that the device only publishes to its own project's topic, then bridges each MQTT message directly to Kafka (`raw.ingest.af-ke-1`) where the ingestion-service picks it up — no HTTP round-trip involved.
+**How it works:** EMQX validates the API key on connect via a webhook to auth-service, and enforces that the device only publishes to its own project's topic. Once the message is accepted, the EMQX rule engine (SQL rule on `ioteca/#`) extracts the MQTT username as `project_id`, decodes the JSON payload, and POSTs both to the api-gateway's `/api/v1/ingest/mqtt` endpoint via a webhook bridge. The api-gateway verifies the shared `X-EMQX-Secret` header and publishes the message to Kafka (`raw.ingest.af-ke-1`), where the ingestion-service picks it up. TLS termination for MQTT is handled by Nginx Proxy Manager in front of EMQX's plain port 1883.
 
 ### HTTP REST (Recommended for scripts and server-side apps)
 
@@ -1099,7 +1099,7 @@ docker-compose.yml
 ├── alert-engine       (Java Spring Boot, port 8083 — internal only)
 ├── quota-service      (Java Spring Boot, port 8084 — internal only)
 ├── notification-service (Java Spring Boot, port 8085 — internal only)
-├── emqx               (EMQX broker, ports 1883/8883/8083ws exposed; 18083 dashboard on localhost only)
+├── emqx               (EMQX broker, ports 1883/8083ws exposed; 18083 dashboard on localhost only)
 ├── kafka              (Apache Kafka — internal only)
 ├── zookeeper          (Kafka dependency — internal only)
 ├── timescaledb        (TimescaleDB — internal only)
@@ -1115,9 +1115,8 @@ External internet (via Nginx Proxy Manager)
   │
   ├── /api/** → api-gateway (:8080)   ← single entry for all REST traffic
   ├── /*      → frontend (:3000)
-  ├── :1883   → EMQX (MQTT plain)
-  └── :8883   → EMQX (MQTT TLS)
-      :8083   → EMQX (MQTT WebSocket)
+  ├── :1883   → EMQX (MQTT plain — Nginx Proxy Manager handles TLS termination)
+  └── :8083   → EMQX (MQTT WebSocket)
 ```
 
 ---
@@ -1178,7 +1177,8 @@ IoTeca/
 │   │   ├── emqx.conf
 │   │   └── acl.conf
 │   ├── kafka/
-│   │   └── server.properties
+│   │   ├── server.properties
+│   │   └── init.sh                # entrypoint: starts broker, waits, creates topics
 │   ├── nginx/          # kept for reference; routing handled by Nginx Proxy Manager
 │   │   └── nginx.conf
 │   ├── postgres/
@@ -1220,6 +1220,7 @@ KAFKA_CONSUMER_GROUP_ID=ioteca-services
 EMQX_API_URL=http://emqx:18083/api/v5
 EMQX_API_KEY=changeme
 EMQX_AUTH_WEBHOOK_SECRET=changeme
+EMQX_INTERNAL_SECRET=changeme-emqx-internal-secret   # shared secret for the MQTT webhook bridge
 
 # ---- Auth / Gateway ----
 JWT_SECRET=changeme-min-32-chars
@@ -1269,6 +1270,8 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
 ### Create Kafka topics
+
+Kafka topics are created automatically when the Kafka container starts (via `infra/kafka/init.sh`). To create them manually against a running broker:
 
 ```bash
 ./scripts/create-kafka-topics.sh

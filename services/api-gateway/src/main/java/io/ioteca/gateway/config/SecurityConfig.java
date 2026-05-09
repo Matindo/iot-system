@@ -29,6 +29,8 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**", "/actuator/**").permitAll()
+                // EMQX webhook — auth is the shared secret checked in the controller
+                .requestMatchers("/api/v1/ingest/mqtt").permitAll()
                 // Ingest accepts both JWT (developer testing) and API key (devices)
                 .requestMatchers("/api/v1/ingest/**").hasAnyRole("USER", "ADMIN", "DEVICE")
                 .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
