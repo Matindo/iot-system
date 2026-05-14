@@ -6,3 +6,4 @@ E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\config\Ap
 E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\repository\AlertRuleRepository.java
 E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\dto\AlertEvent.java
 E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\entity\AlertRule.java
+E:\Work\iot-system\services\alert-engine\src\main\java\io\ioteca\alert\config\KafkaTopicsConfig.java

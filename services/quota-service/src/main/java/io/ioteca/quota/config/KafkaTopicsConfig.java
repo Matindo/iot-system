@@ -9,6 +9,14 @@ import org.springframework.kafka.config.TopicBuilder;
 public class KafkaTopicsConfig {
 
     @Bean
+    public NewTopic rawIngestTopic() {
+        return TopicBuilder.name("raw.ingest.af-ke-1")
+                .partitions(3)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
     public NewTopic quotaEventsTopic() {
         return TopicBuilder.name("quota.events")
                 .partitions(3)

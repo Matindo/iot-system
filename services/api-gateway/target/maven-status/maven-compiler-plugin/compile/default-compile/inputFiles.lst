@@ -24,4 +24,5 @@ E:\Work\iot-system\services\api-gateway\src\main\java\io\ioteca\gateway\filter\J
 E:\Work\iot-system\services\api-gateway\src\main\java\io\ioteca\gateway\config\JwtConfig.java
 E:\Work\iot-system\services\api-gateway\src\main\java\io\ioteca\gateway\controller\AdminController.java
 E:\Work\iot-system\services\api-gateway\src\main\java\io\ioteca\gateway\entity\ApiKey.java
+E:\Work\iot-system\services\api-gateway\src\main\java\io\ioteca\gateway\config\KafkaTopicsConfig.java
 E:\Work\iot-system\services\api-gateway\src\main\java\io\ioteca\gateway\controller\AuthProxyController.java

@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: io.ioteca.notification.kafka.AlertEventConsumerTest
+-------------------------------------------------------------------------------
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.592 s -- in io.ioteca.notification.kafka.AlertEventConsumerTest

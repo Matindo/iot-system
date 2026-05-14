@@ -1,4 +1,4 @@
-io\ioteca\notification\kafka\AlertEventConsumerTest.class
 io\ioteca\notification\service\WebhookServiceTest.class
 io\ioteca\notification\kafka\QuotaEventConsumerTest.class
 io\ioteca\notification\service\EmailServiceTest.class
+io\ioteca\notification\kafka\AlertEventConsumerTest.class

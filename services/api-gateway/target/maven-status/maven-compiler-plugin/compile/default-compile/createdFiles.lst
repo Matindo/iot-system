@@ -1,5 +1,4 @@
 io\ioteca\gateway\entity\AlertRule.class
-io\ioteca\gateway\controller\IngestController$MqttIngestBody.class
 io\ioteca\gateway\config\JwtConfig.class
 io\ioteca\gateway\entity\Device$DeviceBuilder.class
 io\ioteca\gateway\filter\JwtAuthenticationFilter.class
@@ -27,5 +26,6 @@ io\ioteca\gateway\entity\Project$ProjectBuilder.class
 io\ioteca\gateway\exception\GlobalExceptionHandler.class
 io\ioteca\gateway\repository\AlertRuleRepository.class
 io\ioteca\gateway\entity\ApiKey.class
+io\ioteca\gateway\config\KafkaTopicsConfig.class
 io\ioteca\gateway\entity\Device.class
 io\ioteca\gateway\entity\Project.class

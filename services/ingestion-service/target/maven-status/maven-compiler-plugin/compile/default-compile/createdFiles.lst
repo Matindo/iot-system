@@ -1,4 +1,5 @@
 io\ioteca\ingestion\entity\Device$DeviceBuilder.class
+io\ioteca\ingestion\config\KafkaTopicsConfig.class
 io\ioteca\ingestion\dto\ProcessedMessage.class
 io\ioteca\ingestion\entity\Device.class
 io\ioteca\ingestion\entity\SensorData.class

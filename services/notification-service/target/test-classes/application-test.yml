@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5438/ioteca
+    username: ioteca
+    password: testpwd
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema-init.sql
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: platform
+    open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:19092
+    consumer:
+      group-id: notification-it-group
+      auto-offset-reset: latest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+platform:
+  base-url: http://localhost:8080
+  from-email: noreply@ioteca.io
+
+management:
+  health:
+    mail:
+      enabled: false
+
+logging:
+  level:
+    org.hibernate: WARN
+    org.springframework.kafka: WARN

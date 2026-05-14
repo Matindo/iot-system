@@ -22,7 +22,8 @@
 14. [Directory Structure](#14-directory-structure)
 15. [Environment Variables](#15-environment-variables)
 16. [Development Setup](#16-development-setup)
-17. [Roadmap](#17-roadmap)
+17. [Integration Testing](#17-integration-testing)
+18. [Roadmap](#18-roadmap)
 
 ---
 
@@ -1321,7 +1322,103 @@ python scripts/load-test.py --devices 50 --interval 2 --project-id <your-project
 
 ---
 
-## 17. Roadmap
+## 17. Integration Testing
+
+The platform has full integration test coverage for each backend service. Tests are real end-to-end: they send actual Kafka messages and assert on database and Redis state — no in-process mocks for infrastructure.
+
+### Test Infrastructure
+
+A dedicated `docker-compose.test.yml` spins up isolated containers for each service under test:
+
+| Container | Port | Purpose |
+|---|---|---|
+| `ingestion-test-db` | 5435 | PostgreSQL for ingestion-service IT |
+| `alert-test-db` | 5436 | PostgreSQL for alert-engine IT |
+| `quota-test-db` | 5437 | PostgreSQL for quota-service IT |
+| `notification-test-db` | 5438 | PostgreSQL for notification-service IT |
+| `kafka-test` | 19092 | Shared Apache Kafka (KRaft mode) |
+| `redis-test` | 6380 | Redis for quota-service IT |
+
+### Starting the Test Infrastructure
+
+```bash
+docker compose -f docker-compose.test.yml up -d
+# Wait for all containers to be healthy (≈ 30 s on first run)
+docker compose -f docker-compose.test.yml ps
+```
+
+### Running Integration Tests
+
+Each service has a Maven Failsafe integration test class (`*IT.java`). Run from the service directory:
+
+```bash
+# ingestion-service — 4 tests
+cd services/ingestion-service
+mvn verify -Dsurefire.skip=true
+
+# alert-engine — 5 tests
+cd services/alert-engine
+mvn verify -Dsurefire.skip=true
+
+# quota-service — 4 tests
+cd services/quota-service
+mvn verify -Dsurefire.skip=true
+
+# notification-service — 5 tests
+cd services/notification-service
+mvn verify -Dsurefire.skip=true
+```
+
+### What Each IT Covers
+
+**`ingestion-service` — `IngestionServiceIT`**
+
+| Test | Verifies |
+|---|---|
+| `validMessage_writtenToDb` | Message consumed from Kafka → rows inserted in `tsdata.sensor_data` |
+| `deviceAutoRegistered` | First message from unknown device → row inserted in `platform.devices` |
+| `processedEventEmitted` | After DB write → `ProcessedMessage` published to `processed.ingest.af-ke-1` |
+| `invalidPayload_missingDeviceId_isDropped` | Malformed message → acked without writing, no row in DB |
+
+**`alert-engine` — `AlertEngineIT`**
+
+| Test | Verifies |
+|---|---|
+| `metricExceedsThreshold_alertFired` | `ProcessedMessage` with `temperature=35` > threshold 30 → event on `alert.events` |
+| `metricBelowThreshold_noAlertFired` | `temperature=25` < threshold → no event published |
+| `inSuppressionWindow_alertSuppressed` | Rule fired 5 min ago with 1-hour suppression → no event |
+| `noMatchingRule_noAlertFired` | Metric in payload has no matching rule → no event |
+| `lteCondition_metricAtThreshold_alertFired` | `battery=20 lte 20` → event published |
+
+**`quota-service` — `QuotaServiceIT`**
+
+| Test | Verifies |
+|---|---|
+| `message_exceedsDailyLimit_quotaEventEmitted` | Tier limit=1, send 1 message → `EXCEEDED` event on `quota.events` |
+| `message_withinLimit_noQuotaEvent` | Tier limit=10,000, send 1 message → no event |
+| `redisCounter_incrementedOnEachMessage` | Send 3 messages → Redis key `project:{id}:msgs:{date}` ≥ 3 |
+| `warningThreshold_quotaEventWithWarningStatus` | Send 8 of 10 allowed messages → `WARNING_80` event |
+
+**`notification-service` — `NotificationServiceIT`**
+
+| Test | Verifies |
+|---|---|
+| `alertEvent_emailChannel_createsNotificationLog` | Alert event consumed → `notification_log` row with type=ALERT, channel=EMAIL |
+| `alertEvent_unknownProject_isDropped` | Event for non-existent project → no log row |
+| `quotaExceededEvent_createsNotificationLog` | `EXCEEDED` quota event → log row with type=QUOTA_EXCEEDED |
+| `quotaWarningEvent_createsNotificationLog` | `WARNING_80` quota event → log row with type=QUOTA_WARNING |
+| `alertEmailDelivered_logMarkedDelivered` | Alert event → log row with `delivered=true` (mock `JavaMailSender` succeeds) |
+
+### Test Design Notes
+
+- **Consumer-readiness guard** — every IT class uses `@BeforeAll` + Awaitility to wait until all `ConcurrentMessageListenerContainer` instances have non-empty partition assignments before the first test runs. This eliminates NOT_COORDINATOR / rebalance timing races.
+- **`auto-offset-reset: latest`** — test consumers start from the current end of each topic so previous failed runs don't replay stale messages into the new test session.
+- **`ack-mode: manual_immediate`** — all consumers use `Acknowledgment ack` for explicit offset control; this setting must be present in both production and test `application.yml`.
+- **Isolated databases** — each service has its own PostgreSQL container on a unique port; `ddl-auto: create-drop` recreates the schema on every test run.
+
+---
+
+## 18. Roadmap
 
 ### Phase 1 — Core Platform (MVP)
 - [ ] User auth (register, login, JWT)

@@ -31,6 +31,8 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
       retries: 3
+    listener:
+      ack-mode: manual_immediate
 
 management:
   endpoints:

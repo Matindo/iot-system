@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/ioteca
+    username: ioteca
+    password: testpwd
+
+jwt:
+  secret: test-secret-key-minimum-32-chars!!
+  expiry-minutes: 60
+  refresh-expiry-days: 30
+
+logging:
+  level:
+    org.flywaydb: WARN
+    org.hibernate: WARN

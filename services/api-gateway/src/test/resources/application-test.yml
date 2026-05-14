@@ -1,0 +1,41 @@
+jwt:
+  secret: test-secret-key-minimum-32-chars!!
+  expiry-minutes: 60
+  refresh-expiry-days: 30
+
+services:
+  auth-service-url: http://localhost:9999  # not called in IT tests
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5434/ioteca
+    username: ioteca
+    password: testpwd
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:test-schema.sql
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        default_schema: platform
+    open-in-view: false
+  flyway:
+    enabled: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    admin:
+      auto-create: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: testpwd
+      timeout: 200ms
+
+logging:
+  level:
+    org.hibernate: WARN
+    org.springframework.security: WARN

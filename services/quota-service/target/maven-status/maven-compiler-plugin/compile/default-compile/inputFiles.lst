@@ -5,4 +5,5 @@ E:\Work\iot-system\services\quota-service\src\main\java\io\ioteca\quota\service\
 E:\Work\iot-system\services\quota-service\src\main\java\io\ioteca\quota\entity\SubscriptionTier.java
 E:\Work\iot-system\services\quota-service\src\main\java\io\ioteca\quota\repository\UserSubscriptionRepository.java
 E:\Work\iot-system\services\quota-service\src\main\java\io\ioteca\quota\entity\UserSubscription.java
+E:\Work\iot-system\services\quota-service\src\main\java\io\ioteca\quota\config\KafkaTopicsConfig.java
 E:\Work\iot-system\services\quota-service\src\main\java\io\ioteca\quota\kafka\RawIngestConsumer.java

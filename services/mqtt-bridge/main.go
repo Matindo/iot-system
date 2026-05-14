@@ -19,6 +19,64 @@ type webhookBody struct {
 	Payload   json.RawMessage `json:"payload"`
 }
 
+// messageWriter is satisfied by *kafka.Writer and by the test mock.
+type messageWriter interface {
+	WriteMessages(ctx context.Context, msgs ...kafka.Message) error
+}
+
+type server struct {
+	secret string
+	writer messageWriter
+}
+
+func (s *server) handleIngest(w http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("X-EMQX-Secret") != s.secret {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	var body webhookBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.ProjectID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	var merged map[string]any
+	if err := json.Unmarshal(body.Payload, &merged); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	merged["project_id"] = body.ProjectID
+
+	value, err := json.Marshal(merged)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if err := s.writer.WriteMessages(context.Background(), kafka.Message{
+		Key:   []byte(body.ProjectID),
+		Value: value,
+	}); err != nil {
+		log.Printf("kafka write error: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func handleHealth(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func newMux(s *server) *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /ingest", s.handleIngest)
+	mux.HandleFunc("GET /health", handleHealth)
+	return mux
+}
+
 func main() {
 	secret  := mustEnv("EMQX_INTERNAL_SECRET")
 	brokers := getEnv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
@@ -34,53 +92,10 @@ func main() {
 	}
 	defer writer.Close()
 
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("POST /ingest", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("X-EMQX-Secret") != secret {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		var body webhookBody
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.ProjectID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		// Merge project_id into the payload so ingestion-service can resolve it
-		// from the message body (its primary resolution path).
-		var merged map[string]any
-		if err := json.Unmarshal(body.Payload, &merged); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		merged["project_id"] = body.ProjectID
-
-		value, err := json.Marshal(merged)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if err := writer.WriteMessages(context.Background(), kafka.Message{
-			Key:   []byte(body.ProjectID),
-			Value: value,
-		}); err != nil {
-			log.Printf("kafka write error: %v", err)
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-
-		w.WriteHeader(http.StatusAccepted)
-	})
-
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
+	s := &server{secret: secret, writer: writer}
 
 	log.Printf("mqtt-bridge listening on :%s → topic %s", port, topic)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	log.Fatal(http.ListenAndServe(":"+port, newMux(s)))
 }
 
 func mustEnv(key string) string {

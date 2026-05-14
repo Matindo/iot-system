@@ -12,6 +12,7 @@ E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\entity\Use
 E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\dto\AuthResponse.java
 E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\dto\TokenRefreshRequest.java
 E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\controller\ApiKeyController.java
+E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\config\FlywayConfig.java
 E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\exception\GlobalExceptionHandler.java
 E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\config\JwtConfig.java
 E:\Work\iot-system\services\auth-service\src\main\java\io\ioteca\auth\repository\SubscriptionTierRepository.java

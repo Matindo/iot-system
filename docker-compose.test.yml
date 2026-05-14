@@ -1,0 +1,119 @@
+services:
+  auth-test-db:
+    image: timescale/timescaledb:latest-pg16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: ioteca
+      POSTGRES_USER: ioteca
+      POSTGRES_PASSWORD: testpwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  gateway-test-db:
+    image: postgres:16
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_DB: ioteca
+      POSTGRES_USER: ioteca
+      POSTGRES_PASSWORD: testpwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ingestion-test-db:
+    image: postgres:16
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_DB: ioteca
+      POSTGRES_USER: ioteca
+      POSTGRES_PASSWORD: testpwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  alert-test-db:
+    image: postgres:16
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: ioteca
+      POSTGRES_USER: ioteca
+      POSTGRES_PASSWORD: testpwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  quota-test-db:
+    image: postgres:16
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: ioteca
+      POSTGRES_USER: ioteca
+      POSTGRES_PASSWORD: testpwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  notification-test-db:
+    image: postgres:16
+    ports:
+      - "5438:5432"
+    environment:
+      POSTGRES_DB: ioteca
+      POSTGRES_USER: ioteca
+      POSTGRES_PASSWORD: testpwd
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ioteca -d ioteca"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # Kafka listens on port 19092 both inside and outside the container so that
+  # the host JVM, in-container health check, and advertised listener all agree.
+  kafka-test:
+    image: apache/kafka:3.9.0
+    ports:
+      - "19092:19092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:19092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:19092 --list"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  redis-test:
+    image: redis:7
+    ports:
+      - "6380:6379"
+    command: redis-server --requirepass testpwd
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "testpwd", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

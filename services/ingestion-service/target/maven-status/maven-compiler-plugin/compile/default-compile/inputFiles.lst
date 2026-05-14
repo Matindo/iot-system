@@ -5,6 +5,7 @@ E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\
 E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\IngestionServiceApplication.java
 E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\entity\SensorDataId.java
 E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\repository\SensorDataRepository.java
+E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\config\KafkaTopicsConfig.java
 E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\dto\RawMessage.java
 E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\service\IngestionService.java
 E:\Work\iot-system\services\ingestion-service\src\main\java\io\ioteca\ingestion\entity\Device.java

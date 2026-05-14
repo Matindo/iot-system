@@ -32,6 +32,7 @@ public class JwtService {
         long now = System.currentTimeMillis();
         return Jwts.builder()
                 .subject(user.getId().toString())
+                .id(UUID.randomUUID().toString())
                 .claims(Map.of(
                         "email", user.getEmail(),
                         "role",  user.getRole(),

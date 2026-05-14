@@ -1,1 +1,4 @@
 io\ioteca\ingestion\service\IngestionServiceTest.class
+io\ioteca\ingestion\IngestionServiceIT.class
+io\ioteca\ingestion\IngestionServiceIT$TestConfig.class
+io\ioteca\ingestion\IngestionServiceIT$ProcessedCapture.class

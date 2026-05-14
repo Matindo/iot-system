@@ -10,6 +10,7 @@ io\ioteca\auth\repository\ApiKeyRepository.class
 io\ioteca\auth\dto\UserResponse.class
 io\ioteca\auth\repository\ProjectRepository.class
 io\ioteca\auth\service\UserDetailsServiceImpl.class
+io\ioteca\auth\config\FlywayConfig.class
 io\ioteca\auth\dto\AuthResponse.class
 io\ioteca\auth\exception\GlobalExceptionHandler.class
 io\ioteca\auth\repository\UserRepository.class

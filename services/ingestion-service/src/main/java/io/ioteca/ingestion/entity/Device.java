@@ -35,7 +35,7 @@ public class Device {
     private Double latitude;
     private Double longitude;
 
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "text")
     private String tags;
 
     @Column(name = "is_active", nullable = false)

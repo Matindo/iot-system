@@ -38,8 +38,7 @@ public class SensorData {
     @Column(name = "value_str")
     private String valueStr;
 
-    // JSONB stored as string to avoid extra dependencies
-    @Column(columnDefinition = "jsonb")
+    @Column(columnDefinition = "text")
     private String tags;
 
     @Column(name = "ingested_at", nullable = false)
